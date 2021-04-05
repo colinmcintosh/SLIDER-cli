@@ -1,5 +1,5 @@
-# slider-cli
-Command-line implementation of the RAMMB/CIRA SLIDER tool in Golang
+# SLIDER CLI
+A command-line implementation of the RAMMB/CIRA SLIDER tool in Golang.
 
 ## Feature To-Do List
  - [ ] Loop
