@@ -10,6 +10,8 @@ This is not an official product of NOAA, RAMMB, or CIRA.
 slider-cli --satellite=goes-16 --sector=conus --product=band-1
 ```
 
+![Example Animation](examples/cira-rammb-slider---goes-16---conus---geocolor---20210329000116-20210329190116.gif)
+
 ## Feature To-Do List
 
 - [x] Loop
