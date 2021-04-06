@@ -2,12 +2,15 @@ package slider
 
 import (
 	"fmt"
+	"github.com/disintegration/imaging"
 	"github.com/rs/zerolog/log"
 	"image"
+	"image/color"
 	"math"
 	"path"
 	"sort"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -17,6 +20,7 @@ type LoopOptions struct {
 	Product          *Product
 	NumberOfImages   int
 	Speed            int
+	ZoomLevel        int
 	TimeStep         int
 	OutputDirectory  string
 	AllowStaleImages bool
@@ -39,23 +43,55 @@ func CreateLoop(opts *LoopOptions) error {
 			"Continuing with the maximum amount.", len(selectedTimes), opts.NumberOfImages)
 	}
 
-	var images []image.Image
-	for _, timestamp := range selectedTimes {
-		img, err := DownloadImage(&ImageRequest{
-			Date:             timestamp.Format("20060102"),
-			Satellite:        opts.Satellite.ID,
-			Sector:           opts.Sector.ID,
-			Product:          opts.Product.Value,
-			ImageTimestamp:   timestamp.Format("20060102150405"),
-			ZoomLevel:        0,
-			SectionXPosition: 0,
-			SectionYPosition: 0,
-		})
-		if err != nil {
-			return fmt.Errorf("unable to download image for timestamp %d: %w", timestamp, err)
-		}
-		images = append(images, img)
+	zoom := opts.Sector.ZoomLevels[opts.ZoomLevel]
+
+	images := make([]image.Image, len(selectedTimes))
+	canvasWG := sync.WaitGroup{}
+	errChan := make(chan error)
+	for i, timestamp := range selectedTimes {
+		canvasWG.Add(1)
+		go func(timestamp time.Time, i int) {
+			//log.Debug().Msgf("Building canvas %dx%d", zoom.CellSizeX*zoom.XCells, zoom.CellSizeY*zoom.YCells)
+			canvas := imaging.New(zoom.CellSizeX*zoom.XCells, zoom.CellSizeY*zoom.YCells, color.NRGBA{})
+			for x := 0; x < zoom.XCells; x++ {
+				for y := 0; y < zoom.XCells; y++ {
+					cell, err := DownloadImage(&ImageRequest{
+						Date:             timestamp.Format("20060102"),
+						Satellite:        opts.Satellite.ID,
+						Sector:           opts.Sector.ID,
+						Product:          opts.Product.Value,
+						ImageTimestamp:   timestamp.Format("20060102150405"),
+						ZoomLevel:        opts.ZoomLevel,
+						SectionXPosition: x,
+						SectionYPosition: y,
+					})
+					if err != nil {
+						errChan <- fmt.Errorf("unable to download image for timestamp %d: %w", timestamp, err)
+					}
+					canvas = imaging.Paste(canvas, cell, image.Pt(x*zoom.CellSizeX, y*zoom.CellSizeY))
+				}
+			}
+			if zoom.CropX > 0 && zoom.CropY > 0 {
+				canvas = imaging.CropAnchor(canvas, zoom.CropX, zoom.CropY, imaging.Center)
+			}
+			images[i] = canvas
+			canvasWG.Done()
+		}(timestamp, i)
 	}
+
+	waitChan := make(chan bool)
+	go func() {
+		canvasWG.Wait()
+		close(waitChan)
+	}()
+
+	select {
+	case <-waitChan:
+		break
+	case err := <-errChan:
+		return err
+	}
+
 	firstTimestamp := selectedTimes[0].Format("20060102150405")
 	lastTimestamp := selectedTimes[len(selectedTimes)-1].Format("20060102150405")
 

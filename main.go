@@ -25,6 +25,8 @@ func ParseFlags() {
 		"See --sector-list for the full list. (Example: conus)")
 	pflag.StringP("product", "p", "", "Satellite product to request imagery for. "+
 		"See --product-list for the full list. (Example: geocolor)")
+	pflag.IntP("zoom", "z", 1, "Zoom level (changes resolution). "+
+		"See --zoom-list for the full list of allowed zoom levels.")
 	pflag.IntP("image-count", "i", 6, "Number of images in the loop.")
 	pflag.IntP("time-step", "t", 5, "Desired interval of image capture times in minutes.")
 	pflag.Int("speed", 15, "Desired frame rate in 100ths of a second. The lowest value accepted is 1.")
@@ -162,6 +164,7 @@ func handleFlags(config *viper.Viper) {
 		Product:         product,
 		NumberOfImages:  config.GetInt("image-count"),
 		Speed:           config.GetInt("speed"),
+		ZoomLevel:       config.GetInt("zoom"),
 		TimeStep:        config.GetInt("time-step"),
 		OutputDirectory: config.GetString("dir"),
 	})

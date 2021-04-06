@@ -18,7 +18,7 @@ slider-cli --satellite=goes-16 --sector=conus --product=band-1
 - [ ] Rock
 - [ ] Reverse
 - [x] Speed
-- [ ] Zoom (Resolution)
+- [x] Zoom (Resolution)
 - [ ] Pan/Crop
 - [ ] Rotation
 - [ ] Slider

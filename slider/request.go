@@ -49,8 +49,8 @@ import (
 //	- Product
 //	- Image Timestamp
 //  - Zoom Level
-//  - Section X-Position
 //  - Section Y-Position
+//  - Section X-Position
 // 	Example: https://rammb-slider.cira.colostate.edu/data/imagery/20210404/jpss---northern_hemisphere/cira_geocolor/20210404215820/04/011_007.png
 const ImageURI = "https://rammb-slider.cira.colostate.edu/data/imagery/%s/%s---%s/%s/%s/%02d/%03d_%03d.png"
 
@@ -157,7 +157,7 @@ type ImageRequest struct {
 
 func DownloadImage(request *ImageRequest) (image.Image, error) {
 	uri := fmt.Sprintf(ImageURI, request.Date, request.Satellite, request.Sector, request.Product,
-		request.ImageTimestamp, request.ZoomLevel, request.SectionXPosition, request.SectionYPosition)
+		request.ImageTimestamp, request.ZoomLevel, request.SectionYPosition, request.SectionXPosition)
 	log.Debug().Msgf("Downloading image from: %s", uri)
 	resp, err := http.Get(uri)
 	if err != nil {
