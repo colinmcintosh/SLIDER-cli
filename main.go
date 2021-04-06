@@ -19,19 +19,21 @@ func ParseFlags() {
 	pflag.Bool("sector-list", false, "Print a list of available satellite sectors")
 	pflag.Bool("product-list", false, "Print a list of available satellite products")
 
-	pflag.StringP("satellite", "s", "", "Satellite to request imagery for."+
+	pflag.StringP("satellite", "s", "", "Satellite to request imagery for. "+
 		"See --satellite-list for the full list. (Example: goes-17)")
-	pflag.StringP("sector", "c", "", "Satellite sector to request imagery for."+
+	pflag.StringP("sector", "c", "", "Satellite sector to request imagery for. "+
 		"See --sector-list for the full list. (Example: conus)")
-	pflag.StringP("product", "p", "", "Satellite product to request imagery for."+
+	pflag.StringP("product", "p", "", "Satellite product to request imagery for. "+
 		"See --product-list for the full list. (Example: geocolor)")
 	pflag.IntP("image-count", "i", 6, "Number of images in the loop.")
-	pflag.IntP("time-step", "t", 5, "Desired interval of image capture times in minutes.")
+	pflag.IntP("time-step", "t", 120, "Desired interval of image capture times in minutes.")
 
 	pflag.Bool("debug", false, "Enable debugging output.")
 	pflag.StringP("dir", "d", ".", "Output filename to save rendered animation in.")
 	pflag.StringP("output", "o", "", "Output filename to save rendered animation in. "+
 		"(default auto-generated)")
+	pflag.Bool("allow-stale", false, "Allow imagery more than a year old -- filtering these images out"+
+		"helps eliminate issues with loops containing old data.")
 
 	pflag.Usage = func() {
 		_, _ = fmt.Fprintf(os.Stderr, "SLIDER CLI Usage:\n\n")
@@ -108,11 +110,11 @@ func handleFlags(config *viper.Viper) {
 		}
 		sector = slider.Sectors[id]
 		if sector == nil {
-			log.Fatal().Msgf("'%s' is not a valid satellite sector."+
+			log.Fatal().Msgf("'%s' is not a valid satellite sector. "+
 				"Check --sector-list for the available options.", id)
 		}
 		if !satellite.ValidSector(sector) {
-			log.Fatal().Msgf("'%s' is not a valid sector for the '%s' satellite."+
+			log.Fatal().Msgf("'%s' is not a valid sector for the '%s' satellite. "+
 				"Check --sector-list for the available options.", id, satellite.ID)
 		}
 	}
@@ -120,16 +122,16 @@ func handleFlags(config *viper.Viper) {
 	var product *slider.Product
 	if id := config.GetString("product"); id != "" {
 		if satellite == nil || sector == nil {
-			log.Fatal().Msg("You must set --satellite and --sector first to select a product.")
+			log.Fatal().Msg("You must set --satellite and --sector first to select a product. ")
 			os.Exit(1)
 		}
 		product = slider.Products[id]
 		if product == nil {
-			log.Fatal().Msgf("'%s' is not a valid satellite product."+
+			log.Fatal().Msgf("'%s' is not a valid satellite product. "+
 				"Check --product-list for the available options.", id)
 		}
 		if !satellite.ValidSectorProduct(sector, product) {
-			log.Error().Msgf("'%s' is not a valid sector product for the '%s' satellite."+
+			log.Fatal().Msgf("'%s' is not a valid sector product for the '%s' satellite. "+
 				"Check --product-list for the available options.", id, satellite.ID)
 		}
 	}

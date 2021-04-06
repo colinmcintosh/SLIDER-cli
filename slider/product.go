@@ -9,6 +9,7 @@ type Product struct {
 
 var Products = map[string]*Product{
 	GOESBand1Product.ID: GOESBand1Product,
+	GeoColorProduct.ID:  GeoColorProduct,
 }
 
 var GOESBand1Product = &Product{
@@ -16,4 +17,11 @@ var GOESBand1Product = &Product{
 	FriendlyName: "Band 1",
 	Description:  "0.47 µm ('Blue')",
 	Value:        "band_01",
+}
+
+var GeoColorProduct = &Product{
+	ID:           "geocolor",
+	FriendlyName: "GeoColor",
+	Description:  "GeoColor (CIRA)",
+	Value:        "geocolor",
 }

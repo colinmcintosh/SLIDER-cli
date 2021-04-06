@@ -24,7 +24,7 @@ slider-cli --satellite=goes-16 --sector=conus --product=band-1
 - [ ] Product Overlays
 - [ ] Overlay Opacity
 - [x] Number of Images
-- [ ] Time Step
+- [x] Time Step
 - [ ] Map Overlays
 - [ ] Lat/Lon Overlays
 - [ ] Begin Date

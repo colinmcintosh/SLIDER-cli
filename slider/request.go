@@ -52,7 +52,7 @@ import (
 //  - Section X-Position
 //  - Section Y-Position
 // 	Example: https://rammb-slider.cira.colostate.edu/data/imagery/20210404/jpss---northern_hemisphere/cira_geocolor/20210404215820/04/011_007.png
-const ImageURI = "https://rammb-slider.cira.colostate.edu/data/imagery/%d/%s---%s/%s/%d/%02d/%03d_%03d.png"
+const ImageURI = "https://rammb-slider.cira.colostate.edu/data/imagery/%s/%s---%s/%s/%s/%02d/%03d_%03d.png"
 
 // AvailableDatesURI is the address for retrieving the latest dates for available images.
 //  - Satellite
@@ -67,6 +67,9 @@ const AvailableDatesURI = "https://rammb-slider.cira.colostate.edu/data/json/%s/
 //	- Product
 //  Example: https://rammb-slider.cira.colostate.edu/data/json/jpss/northern_hemisphere/cira_geocolor/latest_times.json
 const LatestTimesURI = "https://rammb-slider.cira.colostate.edu/data/json/%s/%s/%s/latest_times.json"
+
+// LatestTimes5760URI is the same as LatestTimesURI but with more times.
+const LatestTimes5760URI = "https://rammb-slider.cira.colostate.edu/data/json/%s/%s/%s/latest_times_5760.json"
 
 func AvailableDates(satellite *Satellite, sector *Sector, product *Product) ([]int, error) {
 	if satellite == nil {
@@ -102,7 +105,7 @@ func AvailableDates(satellite *Satellite, sector *Sector, product *Product) ([]i
 	return data.DatesInt, nil
 }
 
-func LatestTimes(satellite *Satellite, sector *Sector, product *Product) ([]int, error) {
+func LatestTimes(satellite *Satellite, sector *Sector, product *Product, count int) ([]int, error) {
 	if satellite == nil {
 		return nil, fmt.Errorf("satellite must not be nil")
 	}
@@ -113,7 +116,12 @@ func LatestTimes(satellite *Satellite, sector *Sector, product *Product) ([]int,
 		return nil, fmt.Errorf("product must not be nil")
 	}
 
-	uri := fmt.Sprintf(LatestTimesURI, satellite.ID, sector.ID, product.Value)
+	var uri string
+	if count > 100 {
+		uri = fmt.Sprintf(LatestTimes5760URI, satellite.ID, sector.ID, product.Value)
+	} else {
+		uri = fmt.Sprintf(LatestTimesURI, satellite.ID, sector.ID, product.Value)
+	}
 	resp, err := http.Get(uri)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get latest times: %w", err)
@@ -137,11 +145,11 @@ func LatestTimes(satellite *Satellite, sector *Sector, product *Product) ([]int,
 }
 
 type ImageRequest struct {
-	Date             int
+	Date             string
 	Satellite        string
 	Sector           string
 	Product          string
-	ImageTimestamp   int
+	ImageTimestamp   string
 	ZoomLevel        int
 	SectionXPosition int
 	SectionYPosition int

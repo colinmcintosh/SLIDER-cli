@@ -46,6 +46,7 @@ var GOES16Satellite = &Satellite{
 	SectorProducts: map[*Sector][]*Product{
 		GOESCONUSSector: {
 			GOESBand1Product,
+			GeoColorProduct,
 		},
 	},
 }
