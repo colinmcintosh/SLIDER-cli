@@ -1,6 +1,8 @@
-# SLIDER CLI
+# RAMMB/CIRA SLIDER CLI
 
 A command-line implementation of the RAMMB/CIRA SLIDER tool in Golang.
+
+This is not an official product of NOAA, RAMMB, or CIRA.
 
 ## Example Usage
 
@@ -13,7 +15,7 @@ slider-cli --satellite=goes-16 --sector=conus --product=band-1
 - [x] Loop
 - [ ] Rock
 - [ ] Reverse
-- [ ] Speed
+- [x] Speed
 - [ ] Zoom (Resolution)
 - [ ] Pan/Crop
 - [ ] Rotation

@@ -16,6 +16,7 @@ type LoopOptions struct {
 	Sector           *Sector
 	Product          *Product
 	NumberOfImages   int
+	Speed            int
 	TimeStep         int
 	OutputDirectory  string
 	AllowStaleImages bool
@@ -58,7 +59,7 @@ func CreateLoop(opts *LoopOptions) error {
 	firstTimestamp := selectedTimes[0].Format("20060102150405")
 	lastTimestamp := selectedTimes[len(selectedTimes)-1].Format("20060102150405")
 
-	animation, err := AnimateImages(images, 0)
+	animation, err := AnimateImages(images, opts.Speed)
 	outPath := path.Join(opts.OutputDirectory, makeFileName(opts, firstTimestamp, lastTimestamp))
 	err = SaveGIF(outPath, animation)
 	if err != nil {

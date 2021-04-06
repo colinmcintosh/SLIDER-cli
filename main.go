@@ -26,7 +26,8 @@ func ParseFlags() {
 	pflag.StringP("product", "p", "", "Satellite product to request imagery for. "+
 		"See --product-list for the full list. (Example: geocolor)")
 	pflag.IntP("image-count", "i", 6, "Number of images in the loop.")
-	pflag.IntP("time-step", "t", 120, "Desired interval of image capture times in minutes.")
+	pflag.IntP("time-step", "t", 5, "Desired interval of image capture times in minutes.")
+	pflag.Int("speed", 15, "Desired frame rate in 100ths of a second. The lowest value accepted is 1.")
 
 	pflag.Bool("debug", false, "Enable debugging output.")
 	pflag.StringP("dir", "d", ".", "Output filename to save rendered animation in.")
@@ -160,6 +161,7 @@ func handleFlags(config *viper.Viper) {
 		Sector:          sector,
 		Product:         product,
 		NumberOfImages:  config.GetInt("image-count"),
+		Speed:           config.GetInt("speed"),
 		TimeStep:        config.GetInt("time-step"),
 		OutputDirectory: config.GetString("dir"),
 	})
