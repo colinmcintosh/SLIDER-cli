@@ -15,8 +15,8 @@ slider-cli --satellite=goes-16 --sector=conus --product=geocolor -z=2
 ## Feature To-Do List
 
 - [x] Loop
-- [ ] Rock
-- [ ] Reverse
+- [x] Rock
+- [x] Reverse
 - [x] Speed
 - [x] Zoom (Resolution)
 - [ ] Pan/Crop

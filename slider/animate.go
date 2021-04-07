@@ -11,14 +11,22 @@ import (
 	"time"
 )
 
-func AnimateImages(images []image.Image, delay int) (*gif.GIF, error) {
+func AnimateImages(images []image.Image, delay int, style LoopStyle) (*gif.GIF, error) {
 	newGIF := new(gif.GIF)
 	log.Debug().Msgf("Animating %d images", len(images))
 	timeIn := time.Now()
 	wg := sync.WaitGroup{}
 	lock := sync.Mutex{}
-	newGIF.Image = make([]*image.Paletted, len(images))
-	newGIF.Delay = make([]int, len(images))
+	switch style {
+	case RockLoop:
+		newGIF.Image = make([]*image.Paletted, len(images)*2)
+		newGIF.Delay = make([]int, len(images)*2)
+	case ForwardLoop, ReverseLoop:
+		newGIF.Image = make([]*image.Paletted, len(images))
+		newGIF.Delay = make([]int, len(images))
+	default:
+		return nil, fmt.Errorf("unkown animation loop style: %v", style)
+	}
 	for i, img := range images {
 		wg.Add(1)
 		go func(i int, img image.Image) {
@@ -26,8 +34,19 @@ func AnimateImages(images []image.Image, delay int) (*gif.GIF, error) {
 			quantizer := gogif.MedianCutQuantizer{NumColor: 256}
 			quantizer.Quantize(palettedImage, img.Bounds(), img, image.Point{})
 			lock.Lock()
-			newGIF.Image[i] = palettedImage
-			newGIF.Delay[i] = delay
+			switch style {
+			case ForwardLoop:
+				newGIF.Image[i] = palettedImage
+				newGIF.Delay[i] = delay
+			case ReverseLoop:
+				newGIF.Image[len(images)-1-i] = palettedImage
+				newGIF.Delay[len(images)-1-i] = delay
+			case RockLoop:
+				newGIF.Image[i] = palettedImage
+				newGIF.Delay[i] = delay
+				newGIF.Image[(len(images)*2)-1-i] = palettedImage
+				newGIF.Delay[(len(images)*2)-1-i] = delay
+			}
 			lock.Unlock()
 			wg.Done()
 		}(i, img)

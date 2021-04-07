@@ -18,6 +18,7 @@ type LoopOptions struct {
 	Satellite        *Satellite
 	Sector           *Sector
 	Product          *Product
+	Loop             LoopStyle
 	NumberOfImages   int
 	Speed            int
 	ZoomLevel        int
@@ -25,6 +26,14 @@ type LoopOptions struct {
 	OutputDirectory  string
 	AllowStaleImages bool
 }
+
+type LoopStyle int
+
+const (
+	ForwardLoop LoopStyle = iota
+	ReverseLoop
+	RockLoop
+)
 
 func CreateLoop(opts *LoopOptions) error {
 	estimateCount := opts.NumberOfImages * opts.TimeStep / 5
@@ -49,7 +58,7 @@ func CreateLoop(opts *LoopOptions) error {
 	images, err := downloadImages(opts, selectedTimes, zoom)
 
 	// Animate
-	animation, err := AnimateImages(images, opts.Speed)
+	animation, err := AnimateImages(images, opts.Speed, opts.Loop)
 	firstTimestamp := selectedTimes[0].Format("20060102150405")
 	lastTimestamp := selectedTimes[len(selectedTimes)-1].Format("20060102150405")
 	outPath := path.Join(opts.OutputDirectory, makeFileName(opts, firstTimestamp, lastTimestamp))

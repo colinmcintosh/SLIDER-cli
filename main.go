@@ -31,6 +31,8 @@ func ParseFlags() {
 	pflag.IntP("image-count", "i", 6, "Number of images in the loop.")
 	pflag.IntP("time-step", "t", 5, "Desired interval of image capture times in minutes.")
 	pflag.Int("speed", 15, "Desired frame rate in 100ths of a second. The lowest value accepted is 1.")
+	pflag.StringP("loop", "l", "forward", "Loop style. Options are 'forward', 'reverse', "+
+		"or 'rock'. Note that using 'rock' will nearly double the output animation file size.")
 
 	pflag.Bool("debug", false, "Enable debugging output.")
 	pflag.StringP("dir", "d", ".", "Output filename to save rendered animation in.")
@@ -206,10 +208,24 @@ func handleFlags(config *viper.Viper) {
 		log.Fatal().Msg("You must set --satellite, --sector, and --product to create a new loop.")
 	}
 
+	var loop slider.LoopStyle
+	switch config.GetString("loop") {
+	case "forward":
+		loop = slider.ForwardLoop
+	case "reverse":
+		loop = slider.ReverseLoop
+	case "rock":
+		loop = slider.RockLoop
+	default:
+		log.Fatal().Msgf("Loop style '%s' is not valid. Options are 'forward', 'reverse', and 'rock'.",
+			config.GetString("loop"))
+	}
+
 	err := slider.CreateLoop(&slider.LoopOptions{
 		Satellite:       satellite,
 		Sector:          sector,
 		Product:         product,
+		Loop:            loop,
 		NumberOfImages:  config.GetInt("image-count"),
 		Speed:           config.GetInt("speed"),
 		ZoomLevel:       config.GetInt("zoom"),
