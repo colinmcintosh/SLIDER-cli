@@ -10,7 +10,7 @@ This is not an official product of NOAA, RAMMB, or CIRA.
 slider-cli --satellite=goes-16 --sector=conus --product=geocolor -z=2
 ```
 
-![Example Animation](examples/cira-rammb-slider---goes-16---conus---geocolor---20210407132115-20210407140615.gif)
+![Example Animation](examples/cira-rammb-slider---goes-16---conus---geocolor---20210407140615-20210407154115.gif)
 
 ## Feature To-Do List
 

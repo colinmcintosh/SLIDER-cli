@@ -45,11 +45,29 @@ func CreateLoop(opts *LoopOptions) error {
 
 	zoom := opts.Sector.ZoomLevels[opts.ZoomLevel]
 
+	// Download Images
+	images, err := downloadImages(opts, selectedTimes, zoom)
+
+	// Animate
+	animation, err := AnimateImages(images, opts.Speed)
+	firstTimestamp := selectedTimes[0].Format("20060102150405")
+	lastTimestamp := selectedTimes[len(selectedTimes)-1].Format("20060102150405")
+	outPath := path.Join(opts.OutputDirectory, makeFileName(opts, firstTimestamp, lastTimestamp))
+	err = SaveGIF(outPath, animation)
+	if err != nil {
+		return fmt.Errorf("unable to save animation: %w", err)
+	}
+	return nil
+}
+
+func downloadImages(opts *LoopOptions, selectedTimes []time.Time, zoom Zoom) ([]image.Image, error) {
+	timeIn := time.Now()
 	images := make([]image.Image, len(selectedTimes))
-	canvasWG := sync.WaitGroup{}
+	lock := sync.Mutex{}
+	wg := sync.WaitGroup{}
 	errChan := make(chan error)
 	for i, timestamp := range selectedTimes {
-		canvasWG.Add(1)
+		wg.Add(1)
 		go func(timestamp time.Time, i int) {
 			//log.Debug().Msgf("Building canvas %dx%d", zoom.CellSizeX*zoom.XCells, zoom.CellSizeY*zoom.YCells)
 			canvas := imaging.New(zoom.CellSizeX*zoom.XCells, zoom.CellSizeY*zoom.YCells, color.NRGBA{})
@@ -66,7 +84,7 @@ func CreateLoop(opts *LoopOptions) error {
 						SectionYPosition: y,
 					})
 					if err != nil {
-						errChan <- fmt.Errorf("unable to download image for timestamp %d: %w", timestamp, err)
+						errChan <- fmt.Errorf("unable to download image for timestamp %v: %w", timestamp, err)
 					}
 					canvas = imaging.Paste(canvas, cell, image.Pt(x*zoom.CellSizeX, y*zoom.CellSizeY))
 				}
@@ -74,14 +92,16 @@ func CreateLoop(opts *LoopOptions) error {
 			if zoom.CropX > 0 && zoom.CropY > 0 {
 				canvas = imaging.CropAnchor(canvas, zoom.CropX, zoom.CropY, imaging.Center)
 			}
+			lock.Lock()
 			images[i] = canvas
-			canvasWG.Done()
+			lock.Unlock()
+			wg.Done()
 		}(timestamp, i)
 	}
 
 	waitChan := make(chan bool)
 	go func() {
-		canvasWG.Wait()
+		wg.Wait()
 		close(waitChan)
 	}()
 
@@ -89,19 +109,11 @@ func CreateLoop(opts *LoopOptions) error {
 	case <-waitChan:
 		break
 	case err := <-errChan:
-		return err
+		return nil, err
 	}
-
-	firstTimestamp := selectedTimes[0].Format("20060102150405")
-	lastTimestamp := selectedTimes[len(selectedTimes)-1].Format("20060102150405")
-
-	animation, err := AnimateImages(images, opts.Speed)
-	outPath := path.Join(opts.OutputDirectory, makeFileName(opts, firstTimestamp, lastTimestamp))
-	err = SaveGIF(outPath, animation)
-	if err != nil {
-		return fmt.Errorf("unable to save animation: %w", err)
-	}
-	return nil
+	timeOut := time.Now()
+	log.Debug().Msgf("Download took %.3fs", timeOut.Sub(timeIn).Seconds())
+	return images, nil
 }
 
 func SelectTimestamps(times []int, opts *LoopOptions) ([]time.Time, error) {

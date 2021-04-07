@@ -7,18 +7,34 @@ import (
 	"image"
 	"image/gif"
 	"os"
+	"sync"
+	"time"
 )
 
 func AnimateImages(images []image.Image, delay int) (*gif.GIF, error) {
 	newGIF := new(gif.GIF)
 	log.Debug().Msgf("Animating %d images", len(images))
-	for _, img := range images {
-		palettedImage := image.NewPaletted(img.Bounds(), nil)
-		quantizer := gogif.MedianCutQuantizer{NumColor: 256}
-		quantizer.Quantize(palettedImage, img.Bounds(), img, image.Point{})
-		newGIF.Image = append([]*image.Paletted{palettedImage}, newGIF.Image...)
-		newGIF.Delay = append([]int{delay}, newGIF.Delay...)
+	timeIn := time.Now()
+	wg := sync.WaitGroup{}
+	lock := sync.Mutex{}
+	newGIF.Image = make([]*image.Paletted, len(images))
+	newGIF.Delay = make([]int, len(images))
+	for i, img := range images {
+		wg.Add(1)
+		go func(i int, img image.Image) {
+			palettedImage := image.NewPaletted(img.Bounds(), nil)
+			quantizer := gogif.MedianCutQuantizer{NumColor: 256}
+			quantizer.Quantize(palettedImage, img.Bounds(), img, image.Point{})
+			lock.Lock()
+			newGIF.Image[i] = palettedImage
+			newGIF.Delay[i] = delay
+			lock.Unlock()
+			wg.Done()
+		}(i, img)
 	}
+	wg.Wait()
+	timeOut := time.Now()
+	log.Debug().Msgf("Animation took %.3fs", timeOut.Sub(timeIn).Seconds())
 	return newGIF, nil
 }
 
