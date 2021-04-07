@@ -34,7 +34,8 @@ func ParseFlags() {
 	pflag.StringP("loop", "l", "forward", "Loop style. Options are 'forward', 'reverse', "+
 		"or 'rock'. Note that using 'rock' will nearly double the output animation file size.")
 
-	pflag.Bool("debug", false, "Enable debugging output.")
+	pflag.Bool("help", false, "Print help dialog.")
+	pflag.BoolP("verbose", "v", false, "Enable verbose output.")
 	pflag.StringP("dir", "d", ".", "Output filename to save rendered animation in.")
 	pflag.StringP("output", "o", "", "Output filename to save rendered animation in. "+
 		"(default auto-generated)")
@@ -42,9 +43,10 @@ func ParseFlags() {
 		"helps eliminate issues with loops containing old data.")
 
 	pflag.Usage = func() {
-		_, _ = fmt.Fprintf(os.Stderr, "SLIDER CLI Usage:\n\n")
+		_, _ = fmt.Fprintf(os.Stderr, "SLIDER CLI Usage:\n")
 		pflag.PrintDefaults()
-		_, _ = fmt.Fprintf(os.Stderr, "\n")
+		_, _ = fmt.Fprintf(os.Stderr, "\nUsage Examples:\n")
+		_, _ = fmt.Fprintf(os.Stderr, "    slider-cli --satellite=goes-16 --sector=conus --product=geocolor -z=2\n\n")
 	}
 	pflag.ErrHelp = nil
 	pflag.Parse()
@@ -86,6 +88,10 @@ func main() {
 	}
 	if config.GetBool("debug") {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	}
+	if config.GetBool("help") {
+		pflag.Usage()
+		os.Exit(0)
 	}
 
 	handleFlags(config)
