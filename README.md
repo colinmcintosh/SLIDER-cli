@@ -7,10 +7,10 @@ This is not an official product of NOAA, RAMMB, or CIRA.
 ## Example Usage
 
 ```bash
-slider-cli --satellite=goes-16 --sector=conus --product=band-1
+slider-cli --satellite=goes-16 --sector=conus --product=geocolor -z=2
 ```
 
-![Example Animation](examples/cira-rammb-slider---goes-16---conus---geocolor---20210329000116-20210329190116.gif)
+![Example Animation](examples/cira-rammb-slider---goes-16---conus---geocolor---20210407132115-20210407140615.gif)
 
 ## Feature To-Do List
 
