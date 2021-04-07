@@ -41,3 +41,4 @@ slider-cli --satellite=goes-16 --sector=conus --product=band-1
 - [ ] Complete Satellite List
 - [ ] Complete Sector List
 - [ ] Complete Product List
+- [ ] RAMMB/CIRA Watermark Overlays
