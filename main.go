@@ -18,6 +18,7 @@ func ParseFlags() {
 	pflag.Bool("satellite-list", false, "Print a list of available satellites")
 	pflag.Bool("sector-list", false, "Print a list of available satellite sectors")
 	pflag.Bool("product-list", false, "Print a list of available satellite products")
+	pflag.Bool("zoom-list", false, "Print a list of available zoom levels for satellite sectors")
 
 	pflag.StringP("satellite", "s", "", "Satellite to request imagery for. "+
 		"See --satellite-list for the full list. (Example: goes-17)")
@@ -90,6 +91,7 @@ func main() {
 
 func handleFlags(config *viper.Viper) {
 	if config.GetBool("satellite-list") {
+		fmt.Println("Available Satellites")
 		for _, satellite := range slider.Satellites {
 			fmt.Println(fmt.Sprintf("%20s = %s (%s)", satellite.ID, satellite.FriendlyName, satellite.Description))
 		}
@@ -103,6 +105,18 @@ func handleFlags(config *viper.Viper) {
 			log.Fatal().Msgf("'%s' is not a valid satellite."+
 				"Check --satellite-list for the available options.", id)
 		}
+	}
+
+	if config.GetBool("sector-list") {
+		if satellite == nil {
+			log.Fatal().Msg("You must set --satellite first to list available sectors.")
+			os.Exit(1)
+		}
+		fmt.Println(fmt.Sprintf("Available Sectors on Satellite %s", satellite.FriendlyName))
+		for sector := range satellite.SectorProducts {
+			fmt.Println(fmt.Sprintf("%20s = %s", sector.ID, sector.FriendlyName))
+		}
+		os.Exit(0)
 	}
 
 	var sector *slider.Sector
@@ -120,6 +134,40 @@ func handleFlags(config *viper.Viper) {
 			log.Fatal().Msgf("'%s' is not a valid sector for the '%s' satellite. "+
 				"Check --sector-list for the available options.", id, satellite.ID)
 		}
+	}
+
+	if config.GetBool("zoom-list") {
+		if satellite == nil || sector == nil {
+			log.Fatal().Msg("You must set --satellite and --sector first to list available zoom levels.")
+			os.Exit(1)
+		}
+		fmt.Println(fmt.Sprintf("Zoom Levels for Sector %s on Satellite %s",
+			sector.FriendlyName, satellite.FriendlyName))
+		for _, zoom := range sector.ZoomLevels {
+			var x, y int
+			if zoom.CropX > 0 && zoom.CropY > 0 {
+				x = zoom.CropX
+				y = zoom.CropY
+			} else {
+				x = zoom.XCells * zoom.CellSizeX
+				y = zoom.YCells * zoom.CellSizeY
+			}
+			fmt.Println(fmt.Sprintf("%5d = %dpx x %dpx", zoom.Level, x, y))
+		}
+		os.Exit(0)
+	}
+
+	if config.GetBool("product-list") {
+		if satellite == nil || sector == nil {
+			log.Fatal().Msg("You must set --satellite and --sector first to list available products.")
+			os.Exit(1)
+		}
+		fmt.Println(fmt.Sprintf("Available Products for Sector %s on Satellite %s",
+			sector.FriendlyName, satellite.FriendlyName))
+		for _, product := range satellite.SectorProducts[sector] {
+			fmt.Println(fmt.Sprintf("%20s = %s (%s)", product.ID, product.FriendlyName, product.Description))
+		}
+		os.Exit(0)
 	}
 
 	var product *slider.Product
