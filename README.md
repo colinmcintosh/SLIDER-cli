@@ -1,8 +1,36 @@
 # RAMMB/CIRA SLIDER CLI
 
-A command-line implementation of the RAMMB/CIRA SLIDER tool in Golang.
+A command-line implementation of the
+RAMMB/CIRA [SLIDER tool](https://rammb-slider.cira.colostate.edu/)
+in Golang. This tool downloads NOAA images taken by weather satellites in space
+and creates animations/GIFs from those images. See an example below.
 
-This is not an official product of NOAA, RAMMB, or CIRA.
+SLIDER is
+the [Satellite Loop Interactive Data Explorer in Real-time](https://www.satelliteconferences.noaa.gov/2017/doc/poster/94.pdf)
+.
+
+This tool is meant to replicate most of the features of SLIDER and includes some
+additional flexibility in configuration options. The goal of this utility is to
+resolve some of the common issues with the SLIDER web interface, specifically:
+
+- Incomplete frames being rendered on screen
+- Slow to generate animations
+- Web browser may crash for complex animations
+- Limited options for features like time-step and speed
+
+This is not to downplay the awesomeness that is the SLIDER web UI. The folks who
+created it did amazing work and this CLI tool hopes to be complementary to that
+effort. For more details on their effort check out this
+2018 [talk from AMS](https://ams.confex.com/ams/98Annual/webprogram/Paper336810.html)
+on SLIDER.
+
+Platforms Supported: Windows, Linux, Mac
+
+Checkout the [Releases](https://github.com/colinmcintosh/SLIDER-cli/releases)
+page to download the latest version or you can build the source code with
+`make build`, which requires Golang and CMake.
+
+Note: This is not an official product of NWS, NOAA, RAMMB, or CIRA.
 
 ## Example Usage
 
