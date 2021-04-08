@@ -12,11 +12,6 @@ jobs:
       matrix:
         platform: [ 'linux', 'freebsd', 'windows', 'darwin' ]
         architecture: [ 'amd64' ]
-        include:
-          - platform: linux
-            architecture: arm
-          - platform: linux
-            architecture: arm64
     steps:
       - name: Set up timezone
         uses: zcong1993/setup-timezone@v1.0
