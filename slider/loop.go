@@ -89,8 +89,8 @@ func CreateLoop(opts *LoopOptions) error {
 
 	// Animate
 	animation, err := AnimateGIF(images, opts.Speed, opts.Loop)
-	lastTimestamp := selectedTimes[0].Format("20060102150405")
-	firstTimestamp := selectedTimes[len(selectedTimes)-1].Format("20060102150405")
+	firstTimestamp := selectedTimes[0].Format("20060102150405")
+	lastTimestamp := selectedTimes[len(selectedTimes)-1].Format("20060102150405")
 	outPath := path.Join(opts.OutputDirectory, makeFileName(opts, firstTimestamp, lastTimestamp))
 	_, err = SaveGIF(outPath, animation)
 	if err != nil {
@@ -158,7 +158,7 @@ func downloadImages(opts *LoopOptions, selectedTimes []time.Time) ([]image.Image
 // SelectTimestamps selects the desired timestamps from the list of int timestamps returned by SLIDER.
 func SelectTimestamps(times []int, opts *LoopOptions) ([]time.Time, error) {
 	sort.Sort(sort.Reverse(sort.IntSlice(times)))
-	var selectedTimes []time.Time
+	var selectedTimes timeSortable
 	var count = 0
 	var target time.Time
 	for i, t := range times {
@@ -187,15 +187,25 @@ func SelectTimestamps(times []int, opts *LoopOptions) ([]time.Time, error) {
 		}
 
 		selectedTimes = append(selectedTimes, timestamp)
-		target = timestamp.Add(time.Duration(opts.TimeStep) * time.Minute)
+		target = timestamp.Add(-1 * time.Duration(opts.TimeStep) * time.Minute)
 		count++
 		if count >= opts.NumberOfImages {
 			break
 		}
 	}
+	sort.Sort(selectedTimes)
 	log.Debug().Msgf("Selected %d timestamps from available list", len(selectedTimes))
+	for _, ts := range selectedTimes {
+		log.Debug().Msgf("Including %v", ts)
+	}
 	return selectedTimes, nil
 }
+
+type timeSortable []time.Time
+
+func (s timeSortable) Less(i, j int) bool { return s[i].Before(s[j]) }
+func (s timeSortable) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s timeSortable) Len() int           { return len(s) }
 
 func makeFileName(opts *LoopOptions, startTime string, endTime string) string {
 	return fmt.Sprintf("cira-rammb-slider_%s_%s_%s_%dx%d_%s-%s",

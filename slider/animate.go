@@ -67,16 +67,16 @@ func AnimateGIF(images []image.Image, delay int, style LoopStyle) (*gif.GIF, err
 			lock.Lock()
 			switch style {
 			case ForwardLoop:
-				newGIF.Image[len(images)-1-i] = palettedImage
-				newGIF.Delay[len(images)-1-i] = delay
-			case ReverseLoop:
 				newGIF.Image[i] = palettedImage
 				newGIF.Delay[i] = delay
-			case RockLoop:
+			case ReverseLoop:
 				newGIF.Image[len(images)-1-i] = palettedImage
 				newGIF.Delay[len(images)-1-i] = delay
-				newGIF.Image[len(images)+i] = palettedImage
-				newGIF.Delay[len(images)+i] = delay
+			case RockLoop:
+				newGIF.Image[i] = palettedImage
+				newGIF.Delay[i] = delay
+				newGIF.Image[(len(images)*2)-1-i] = palettedImage
+				newGIF.Delay[(len(images)*2)-1-i] = delay
 			}
 			lock.Unlock()
 			wg.Done()
