@@ -5,6 +5,8 @@ type Product struct {
 	FriendlyName string
 	Description  string
 	Value        string
+	// ZoomAdjust is the number of zoom levels to remove from available zoom levels for this product.
+	ZoomAdjust int
 }
 
 var Products = map[string]*Product{

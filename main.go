@@ -134,7 +134,7 @@ func handleFlags(config *viper.Viper) {
 			os.Exit(1)
 		}
 		fmt.Println(fmt.Sprintf("Available Sectors on Satellite %s", satellite.FriendlyName))
-		for sector := range satellite.SectorProducts {
+		for _, sector := range satellite.Sectors {
 			fmt.Println(fmt.Sprintf("%20s = %s", sector.ID, sector.FriendlyName))
 		}
 		os.Exit(0)
@@ -164,8 +164,11 @@ func handleFlags(config *viper.Viper) {
 		}
 		fmt.Println(fmt.Sprintf("Zoom Levels for Sector %s on Satellite %s",
 			sector.FriendlyName, satellite.FriendlyName))
-		for _, zoom := range sector.ZoomLevels {
-			fmt.Println(fmt.Sprintf("%5d = %dpx x %dpx", zoom.Level, zoom.XSize(), zoom.YSize()))
+		for _, zoom := range satellite.ZoomLevels {
+			if zoom.Level > sector.MaxZoomLevel {
+				continue
+			}
+			fmt.Println(fmt.Sprintf("%5d = %dpx x %dpx", zoom.Level, sector.XSize(zoom), sector.YSize(zoom)))
 		}
 		os.Exit(0)
 	}
@@ -177,7 +180,11 @@ func handleFlags(config *viper.Viper) {
 		}
 		fmt.Println(fmt.Sprintf("Available Products for Sector %s on Satellite %s",
 			sector.FriendlyName, satellite.FriendlyName))
-		for _, product := range satellite.SectorProducts[sector] {
+
+		for _, product := range satellite.Products {
+			if sector.ProductMissing(product) {
+				continue
+			}
 			fmt.Println(fmt.Sprintf("%20s = %s (%s)", product.ID, product.FriendlyName, product.Description))
 		}
 		os.Exit(0)

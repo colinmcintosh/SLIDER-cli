@@ -24,6 +24,8 @@ effort. For more details on their effort check out this
 2018 [talk from AMS](https://ams.confex.com/ams/98Annual/webprogram/Paper336810.html)
 on SLIDER.
 
+Note: This is not an official product of NWS, NOAA, RAMMB, or CIRA.
+
 ## Download
 
 **Platforms Supported:** Windows, Linux, Mac
@@ -31,8 +33,6 @@ on SLIDER.
 Checkout the [Releases](https://github.com/colinmcintosh/SLIDER-cli/releases)
 page to download the latest version, or you can build the source code with
 `make build`, which requires Golang and CMake.
-
-Note: This is not an official product of NWS, NOAA, RAMMB, or CIRA.
 
 ## Example Usage
 

@@ -25,6 +25,7 @@ type LoopOptions struct {
 	TimeStep         int
 	OutputDirectory  string
 	AllowStaleImages bool
+	zoom             *Zoom
 }
 
 type LoopStyle int
@@ -52,16 +53,24 @@ func CreateLoop(opts *LoopOptions) error {
 			"Continuing with the maximum amount.", len(selectedTimes), opts.NumberOfImages)
 	}
 
-	zoom := opts.Sector.ZoomLevels[opts.ZoomLevel]
+	if (opts.Sector.MaxZoomLevel - opts.Product.ZoomAdjust) < opts.ZoomLevel {
+		return fmt.Errorf("ZoomLevel %d is greater than sector or product max of %d",
+			opts.ZoomLevel, opts.Sector.MaxZoomLevel-opts.Product.ZoomAdjust)
+	}
+
+	opts.zoom = opts.Satellite.ZoomLevels[opts.ZoomLevel]
 
 	// Download Images
-	images, err := downloadImages(opts, selectedTimes, zoom)
+	images, err := downloadImages(opts, selectedTimes)
+	if err != nil {
+		return fmt.Errorf("unable to download images: %w", err)
+	}
 
 	// Animate
 	animation, err := AnimateImages(images, opts.Speed, opts.Loop)
-	firstTimestamp := selectedTimes[0].Format("20060102150405")
-	lastTimestamp := selectedTimes[len(selectedTimes)-1].Format("20060102150405")
-	outPath := path.Join(opts.OutputDirectory, makeFileName(opts, firstTimestamp, lastTimestamp, zoom))
+	lastTimestamp := selectedTimes[0].Format("20060102150405")
+	firstTimestamp := selectedTimes[len(selectedTimes)-1].Format("20060102150405")
+	outPath := path.Join(opts.OutputDirectory, makeFileName(opts, firstTimestamp, lastTimestamp))
 	_, err = SaveGIF(outPath, animation)
 	if err != nil {
 		return fmt.Errorf("unable to save animation: %w", err)
@@ -69,7 +78,7 @@ func CreateLoop(opts *LoopOptions) error {
 	return nil
 }
 
-func downloadImages(opts *LoopOptions, selectedTimes []time.Time, zoom Zoom) ([]image.Image, error) {
+func downloadImages(opts *LoopOptions, selectedTimes []time.Time) ([]image.Image, error) {
 	timeIn := time.Now()
 	images := make([]image.Image, len(selectedTimes))
 	lock := sync.Mutex{}
@@ -79,13 +88,13 @@ func downloadImages(opts *LoopOptions, selectedTimes []time.Time, zoom Zoom) ([]
 		wg.Add(1)
 		go func(timestamp time.Time, i int) {
 			//log.Debug().Msgf("Building canvas %dx%d", zoom.CellSizeX*zoom.XCells, zoom.CellSizeY*zoom.YCells)
-			canvas := imaging.New(zoom.CellSizeX*zoom.XCells, zoom.CellSizeY*zoom.YCells, color.NRGBA{})
-			for x := 0; x < zoom.XCells; x++ {
-				for y := 0; y < zoom.XCells; y++ {
+			canvas := imaging.New(opts.Sector.CellSize*opts.zoom.NumCells(), opts.Sector.CellSize*opts.zoom.NumCells(), color.NRGBA{})
+			for x := 0; x < opts.zoom.NumCells(); x++ {
+				for y := 0; y < opts.zoom.NumCells(); y++ {
 					cell, err := DownloadImage(&ImageRequest{
 						Date:             timestamp.Format("20060102"),
-						Satellite:        opts.Satellite.ID,
-						Sector:           opts.Sector.ID,
+						Satellite:        opts.Satellite.Value,
+						Sector:           opts.Sector.Value,
 						Product:          opts.Product.Value,
 						ImageTimestamp:   timestamp.Format("20060102150405"),
 						ZoomLevel:        opts.ZoomLevel,
@@ -95,11 +104,11 @@ func downloadImages(opts *LoopOptions, selectedTimes []time.Time, zoom Zoom) ([]
 					if err != nil {
 						errChan <- fmt.Errorf("unable to download image for timestamp %v: %w", timestamp, err)
 					}
-					canvas = imaging.Paste(canvas, cell, image.Pt(x*zoom.CellSizeX, y*zoom.CellSizeY))
+					canvas = imaging.Paste(canvas, cell, image.Pt(x*opts.Sector.CellSize, y*opts.Sector.CellSize))
 				}
 			}
-			if zoom.CropX > 0 && zoom.CropY > 0 {
-				canvas = imaging.CropAnchor(canvas, zoom.CropX, zoom.CropY, imaging.Center)
+			if opts.Sector.CropRatioX > 0 && opts.Sector.CropRatioY > 0 {
+				canvas = imaging.CropAnchor(canvas, opts.Sector.XSize(opts.zoom), opts.Sector.YSize(opts.zoom), imaging.Center)
 			}
 			lock.Lock()
 			images[i] = canvas
@@ -166,7 +175,8 @@ func SelectTimestamps(times []int, opts *LoopOptions) ([]time.Time, error) {
 	return selectedTimes, nil
 }
 
-func makeFileName(opts *LoopOptions, startTime string, endTime string, zoom Zoom) string {
+func makeFileName(opts *LoopOptions, startTime string, endTime string) string {
 	return fmt.Sprintf("cira-rammb-slider_%s_%s_%s_%dx%d_%s-%s",
-		opts.Satellite.ID, opts.Sector.ID, opts.Product.ID, zoom.XSize(), zoom.YSize(), startTime, endTime)
+		opts.Satellite.ID, opts.Sector.ID, opts.Product.ID, opts.Sector.XSize(opts.zoom), opts.Sector.YSize(opts.zoom),
+		startTime, endTime)
 }
