@@ -36,11 +36,11 @@ func AnimateImages(images []image.Image, delay int, style LoopStyle) (*gif.GIF, 
 			lock.Lock()
 			switch style {
 			case ForwardLoop:
-				newGIF.Image[i] = palettedImage
-				newGIF.Delay[i] = delay
-			case ReverseLoop:
 				newGIF.Image[len(images)-1-i] = palettedImage
 				newGIF.Delay[len(images)-1-i] = delay
+			case ReverseLoop:
+				newGIF.Image[i] = palettedImage
+				newGIF.Delay[i] = delay
 			case RockLoop:
 				newGIF.Image[i] = palettedImage
 				newGIF.Delay[i] = delay
@@ -57,13 +57,39 @@ func AnimateImages(images []image.Image, delay int, style LoopStyle) (*gif.GIF, 
 	return newGIF, nil
 }
 
-func SaveGIF(output string, img *gif.GIF) error {
-	f, _ := os.OpenFile(output, os.O_WRONLY|os.O_CREATE, 0644)
+// SaveGIF encodes the GIF data into a .gif file. The .gif extension will be
+// added automatically. If a file with the same name exists an incrementing
+// number will be appended to the end of the file name.
+func SaveGIF(output string, img *gif.GIF) (string, error) {
+	if fileExists(output + ".gif") {
+		var ok bool
+		for i := 1; i < 100; i++ {
+			newName := fmt.Sprintf("%s_%02d", output, i)
+			if !fileExists(newName + ".gif") {
+				output = newName
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			return "", fmt.Errorf("too many duplicate files: %s", output)
+		}
+	}
+
+	f, _ := os.OpenFile(output+".gif", os.O_WRONLY|os.O_CREATE, 0644)
 	defer func() { _ = f.Close() }()
 	err := gif.EncodeAll(f, img)
 	if err != nil {
-		return fmt.Errorf("unable to encode GIF: %w", err)
+		return "", fmt.Errorf("unable to encode GIF: %w", err)
 	}
-	log.Debug().Msgf("Saved GIF to '%s'", output)
-	return nil
+	log.Debug().Msgf("Saved GIF to '%s'", output+".gif")
+	return output + ".gif", nil
+}
+
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }

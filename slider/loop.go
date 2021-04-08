@@ -61,8 +61,8 @@ func CreateLoop(opts *LoopOptions) error {
 	animation, err := AnimateImages(images, opts.Speed, opts.Loop)
 	firstTimestamp := selectedTimes[0].Format("20060102150405")
 	lastTimestamp := selectedTimes[len(selectedTimes)-1].Format("20060102150405")
-	outPath := path.Join(opts.OutputDirectory, makeFileName(opts, firstTimestamp, lastTimestamp))
-	err = SaveGIF(outPath, animation)
+	outPath := path.Join(opts.OutputDirectory, makeFileName(opts, firstTimestamp, lastTimestamp, zoom))
+	_, err = SaveGIF(outPath, animation)
 	if err != nil {
 		return fmt.Errorf("unable to save animation: %w", err)
 	}
@@ -126,7 +126,7 @@ func downloadImages(opts *LoopOptions, selectedTimes []time.Time, zoom Zoom) ([]
 }
 
 func SelectTimestamps(times []int, opts *LoopOptions) ([]time.Time, error) {
-	sort.Ints(times)
+	sort.Sort(sort.Reverse(sort.IntSlice(times)))
 	var selectedTimes []time.Time
 	var count = 0
 	var target time.Time
@@ -166,7 +166,7 @@ func SelectTimestamps(times []int, opts *LoopOptions) ([]time.Time, error) {
 	return selectedTimes, nil
 }
 
-func makeFileName(opts *LoopOptions, startTime string, endTime string) string {
-	return fmt.Sprintf("cira-rammb-slider---%s---%s---%s---%s-%s.gif", opts.Satellite.ID, opts.Sector.ID,
-		opts.Product.ID, startTime, endTime)
+func makeFileName(opts *LoopOptions, startTime string, endTime string, zoom Zoom) string {
+	return fmt.Sprintf("cira-rammb-slider_%s_%s_%s_%dx%d_%s-%s",
+		opts.Satellite.ID, opts.Sector.ID, opts.Product.ID, zoom.XSize(), zoom.YSize(), startTime, endTime)
 }

@@ -11,7 +11,7 @@ the [Satellite Loop Interactive Data Explorer in Real-time](https://www.satellit
 
 This tool is meant to replicate most of the features of SLIDER and includes some
 additional flexibility in configuration options. The goal of this utility is to
-resolve some of the common issues with the SLIDER web interface, specifically:
+resolve some common issues with the SLIDER web interface, specifically:
 
 - Incomplete frames being rendered on screen
 - Slow to generate animations
@@ -24,10 +24,12 @@ effort. For more details on their effort check out this
 2018 [talk from AMS](https://ams.confex.com/ams/98Annual/webprogram/Paper336810.html)
 on SLIDER.
 
-Platforms Supported: Windows, Linux, Mac
+## Download
+
+**Platforms Supported:** Windows, Linux, Mac
 
 Checkout the [Releases](https://github.com/colinmcintosh/SLIDER-cli/releases)
-page to download the latest version or you can build the source code with
+page to download the latest version, or you can build the source code with
 `make build`, which requires Golang and CMake.
 
 Note: This is not an official product of NWS, NOAA, RAMMB, or CIRA.
@@ -35,7 +37,7 @@ Note: This is not an official product of NWS, NOAA, RAMMB, or CIRA.
 ## Example Usage
 
 ```bash
-slider-cli --satellite=goes-16 --sector=conus --product=geocolor -z=2
+./slider-cli --satellite=goes-16 --sector=conus --product=geocolor -z=2
 ```
 
 ![Example Animation](examples/cira-rammb-slider---goes-16---conus---geocolor---20210407140615-20210407154115.gif)
@@ -78,7 +80,7 @@ SLIDER CLI Usage:
                            sectors
 
 Usage Examples:
-    slider-cli --satellite=goes-16 --sector=conus --product=geocolor -z=2
+    ./slider-cli --satellite=goes-16 --sector=conus --product=geocolor -z=2
 ```
 
 ## Feature To-Do List

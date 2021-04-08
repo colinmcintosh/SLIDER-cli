@@ -47,10 +47,14 @@ func ParseFlags() {
 		"helps eliminate issues with loops containing old data.")
 
 	pflag.Usage = func() {
-		_, _ = fmt.Fprintf(os.Stderr, "SLIDER CLI version %s (Built %s) Usage:\n", Version, BuildTime)
+		_, _ = fmt.Fprintf(os.Stderr, "slider-cli version %s (Built %s)\n\n", Version, BuildTime)
+		_, _ = fmt.Fprintf(os.Stderr, "Usage:\n")
 		pflag.PrintDefaults()
 		_, _ = fmt.Fprintf(os.Stderr, "\nUsage Examples:\n")
-		_, _ = fmt.Fprintf(os.Stderr, "    slider-cli --satellite=goes-16 --sector=conus --product=geocolor -z=2\n\n")
+		_, _ = fmt.Fprintf(os.Stderr, "    ./slider-cli --satellite-list\n")
+		_, _ = fmt.Fprintf(os.Stderr, "    ./slider-cli --sector-list --satellite=goes-16\n")
+		_, _ = fmt.Fprintf(os.Stderr, "    ./slider-cli --satellite=goes-16 --sector=conus --product=geocolor -z=2\n")
+		_, _ = fmt.Fprintf(os.Stderr, "    ./slider-cli --satellite=goes-16 --sector=conus --product=band-1 -i=20 -t=10\n\n")
 	}
 	pflag.ErrHelp = nil
 	pflag.Parse()
@@ -161,15 +165,7 @@ func handleFlags(config *viper.Viper) {
 		fmt.Println(fmt.Sprintf("Zoom Levels for Sector %s on Satellite %s",
 			sector.FriendlyName, satellite.FriendlyName))
 		for _, zoom := range sector.ZoomLevels {
-			var x, y int
-			if zoom.CropX > 0 && zoom.CropY > 0 {
-				x = zoom.CropX
-				y = zoom.CropY
-			} else {
-				x = zoom.XCells * zoom.CellSizeX
-				y = zoom.YCells * zoom.CellSizeY
-			}
-			fmt.Println(fmt.Sprintf("%5d = %dpx x %dpx", zoom.Level, x, y))
+			fmt.Println(fmt.Sprintf("%5d = %dpx x %dpx", zoom.Level, zoom.XSize(), zoom.YSize()))
 		}
 		os.Exit(0)
 	}

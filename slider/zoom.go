@@ -10,3 +10,19 @@ type Zoom struct {
 	CropX     int
 	CropY     int
 }
+
+func (z *Zoom) XSize() int {
+	if z.CropX > 0 {
+		return z.CropX
+	} else {
+		return z.XCells * z.CellSizeX
+	}
+}
+
+func (z *Zoom) YSize() int {
+	if z.CropY > 0 {
+		return z.CropY
+	} else {
+		return z.YCells * z.CellSizeY
+	}
+}
