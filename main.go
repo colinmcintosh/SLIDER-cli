@@ -13,6 +13,9 @@ import (
 	"syscall"
 )
 
+var Version = "develop"
+var BuildTime = "develop"
+
 func ParseFlags() {
 	pflag.Bool("date-list", false, "Print a list of available dates")
 	pflag.Bool("satellite-list", false, "Print a list of available satellites")
@@ -36,6 +39,7 @@ func ParseFlags() {
 
 	pflag.Bool("help", false, "Print help dialog.")
 	pflag.BoolP("verbose", "v", false, "Enable verbose output.")
+	pflag.BoolP("version", "V", false, "Print version and exit.")
 	pflag.StringP("dir", "d", ".", "Output filename to save rendered animation in.")
 	pflag.StringP("output", "o", "", "Output filename to save rendered animation in. "+
 		"(default auto-generated)")
@@ -43,7 +47,7 @@ func ParseFlags() {
 		"helps eliminate issues with loops containing old data.")
 
 	pflag.Usage = func() {
-		_, _ = fmt.Fprintf(os.Stderr, "SLIDER CLI Usage:\n")
+		_, _ = fmt.Fprintf(os.Stderr, "SLIDER CLI version %s (Built %s) Usage:\n", Version, BuildTime)
 		pflag.PrintDefaults()
 		_, _ = fmt.Fprintf(os.Stderr, "\nUsage Examples:\n")
 		_, _ = fmt.Fprintf(os.Stderr, "    slider-cli --satellite=goes-16 --sector=conus --product=geocolor -z=2\n\n")
@@ -86,11 +90,16 @@ func main() {
 	if err != nil {
 		log.Fatal().Msgf("unable to load config: %v", err)
 	}
-	if config.GetBool("debug") {
+	if config.GetBool("verbose") {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	}
 	if config.GetBool("help") {
 		pflag.Usage()
+		os.Exit(0)
+	}
+	if config.GetBool("version") {
+		fmt.Println(fmt.Sprintf("slider-cli version %s (Built %s)",
+			Version, BuildTime))
 		os.Exit(0)
 	}
 

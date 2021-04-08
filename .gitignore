@@ -1,5 +1,7 @@
 *.gif
 tools/
+release/
+slider-cli
 
 # Binaries for programs and plugins
 *.exe
