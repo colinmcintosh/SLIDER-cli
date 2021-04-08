@@ -1,7 +1,5 @@
 package slider
 
-import "math"
-
 // Satellite contains all of the information for a single weather satellite and all of it's sectors and products.
 type Satellite struct {
 	// ID is the value sent in the request to SLIDER
@@ -68,18 +66,7 @@ var Satellites = map[string]*Satellite{
 	GOES17Satellite.ID: GOES17Satellite,
 }
 
-// Zoom contains information for a single zoom level or resolution.
-type Zoom struct {
-	Level int
-	Scale string
-}
-
-// NumCells is the number of cells along each axis of the image.
-// Cell X/Y axis origin (0,0) is the upper-left-hand corner of the image.
-func (z *Zoom) NumCells() int {
-	return int(math.Pow(2, float64(z.Level)))
-}
-
+// GOES 16 Satellite
 var GOES16Satellite = &Satellite{
 	ID:           "goes-16",
 	FriendlyName: "GOES-16",
@@ -87,51 +74,32 @@ var GOES16Satellite = &Satellite{
 	Value:        "goes-16",
 	Products: []*Product{
 		GOESBand1Product,
-		GeoColorProduct,
+		CIRAGeoColorProduct,
 	},
 	Sectors: []*Sector{
 		GOESFullDiskSector,
 		GOESCONUSSector,
+		GOESMesoscale1Sector,
+		GOESMesoscale2Sector,
 	},
-	ZoomLevels: []*Zoom{
-		{
-			Level: 0,
-			Scale: "16 km",
-		},
-		{
-			Level: 1,
-			Scale: "8 km",
-		},
-		{
-			Level: 2,
-			Scale: "4 km",
-		},
-		{
-			Level: 3,
-			Scale: "2 km",
-		},
-		{
-			Level: 4,
-			Scale: "1 km",
-		},
-		{
-			Level: 5,
-			Scale: ".5 km",
-		},
-		{
-			Level: 6,
-			Scale: ".25 km",
-		},
-		{
-			Level: 7,
-			Scale: ".125 km",
-		},
-	},
+	ZoomLevels: GOESHimawariZoomLevels,
 }
 
+// GOES 17 Satellite
 var GOES17Satellite = &Satellite{
 	ID:           "goes-17",
 	FriendlyName: "GOES-17",
 	Description:  "West, 137.2W",
 	Value:        "goes-17",
+	Products: []*Product{
+		GOESBand1Product,
+		CIRAGeoColorProduct,
+	},
+	Sectors: []*Sector{
+		GOESFullDiskSector,
+		GOESCONUSSector,
+		GOESMesoscale1Sector,
+		GOESMesoscale2Sector,
+	},
+	ZoomLevels: GOESHimawariZoomLevels,
 }

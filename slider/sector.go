@@ -21,6 +21,7 @@ type Sector struct {
 	MissingProducts []*Product
 }
 
+// ProductMissing returns true if the provided product is present in the MissingProducts list.
 func (s *Sector) ProductMissing(product *Product) bool {
 	for _, missing := range s.MissingProducts {
 		if product == missing {
@@ -50,9 +51,13 @@ func (s *Sector) YSize(zoom *Zoom) int {
 
 // Sectors contains all of the available and included sectors for all satellites.
 var Sectors = map[string]*Sector{
-	GOESCONUSSector.ID: GOESCONUSSector,
+	GOESCONUSSector.ID:      GOESCONUSSector,
+	GOESFullDiskSector.ID:   GOESFullDiskSector,
+	GOESMesoscale1Sector.ID: GOESMesoscale1Sector,
+	GOESMesoscale2Sector.ID: GOESMesoscale2Sector,
 }
 
+// GOES CONUS Sector
 var GOESCONUSSector = &Sector{
 	ID:              "conus",
 	FriendlyName:    "CONUS",
@@ -64,8 +69,32 @@ var GOESCONUSSector = &Sector{
 	MissingProducts: []*Product{},
 }
 
+// GOES Full Disk Sector
 var GOESFullDiskSector = &Sector{
-	ID:           "fd",
-	FriendlyName: "Full Disk",
-	Value:        "full-disk",
+	ID:              "fd",
+	FriendlyName:    "Full Disk",
+	Value:           "full_disk",
+	CellSize:        678,
+	MaxZoomLevel:    5,
+	MissingProducts: []*Product{},
+}
+
+// GOES Mesoscale 1 Sector
+var GOESMesoscale1Sector = &Sector{
+	ID:              "ms1",
+	FriendlyName:    "Mesoscale 1",
+	Value:           "mesoscale_01",
+	CellSize:        500,
+	MaxZoomLevel:    2,
+	MissingProducts: []*Product{},
+}
+
+// GOES Mesoscale 2 Sector
+var GOESMesoscale2Sector = &Sector{
+	ID:              "ms2",
+	FriendlyName:    "Mesoscale 2",
+	Value:           "mesoscale_02",
+	CellSize:        500,
+	MaxZoomLevel:    2,
+	MissingProducts: []*Product{},
 }

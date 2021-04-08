@@ -14,20 +14,34 @@ import (
 	"time"
 )
 
+// LoopOptions are the config options used to create a new loop.
 type LoopOptions struct {
-	Satellite        *Satellite
-	Sector           *Sector
-	Product          *Product
-	Loop             LoopStyle
-	NumberOfImages   int
-	Speed            int
-	ZoomLevel        int
-	TimeStep         int
-	OutputDirectory  string
+	// Satellite is the satellite to request imagery from.
+	Satellite *Satellite
+	// Sector is the sector to request imagery for.
+	Sector *Sector
+	// Product is the product to request imagery for.
+	Product *Product
+	// LoopStyle is the animation style of the output animation.
+	Loop LoopStyle
+	// NumberOfImages is the number of frames in the output animation.
+	NumberOfImages int
+	// Speed is the interval between frames. A higher number increases the delay between frames.
+	Speed int
+	// ZoomLevel is the zoom level to request imagery for. Increasing ZoomLevel increases the output animation
+	// resolution and therefore filesize.
+	ZoomLevel int
+	// TimeStep is the interval between image capture times in minutes.
+	TimeStep int
+	// OutputDirectory is the directory to save output animations in.
+	OutputDirectory string
+	// AllowStaleImages allows imagery that is over one year old to be included in animations. Disallowing this old
+	// imagery by default helps to prevent old images from being accidentally included in loops.
 	AllowStaleImages bool
 	zoom             *Zoom
 }
 
+// CreateLoop creates a new loop with the options specified in the provided LoopOptions.
 func CreateLoop(opts *LoopOptions) error {
 	estimateCount := opts.NumberOfImages * opts.TimeStep / 5
 	latestTimesUnfiltered, err := LatestTimes(opts.Satellite, opts.Sector, opts.Product, estimateCount)
@@ -59,7 +73,7 @@ func CreateLoop(opts *LoopOptions) error {
 	}
 
 	// Animate
-	animation, err := AnimateImages(images, opts.Speed, opts.Loop)
+	animation, err := AnimateGIF(images, opts.Speed, opts.Loop)
 	lastTimestamp := selectedTimes[0].Format("20060102150405")
 	firstTimestamp := selectedTimes[len(selectedTimes)-1].Format("20060102150405")
 	outPath := path.Join(opts.OutputDirectory, makeFileName(opts, firstTimestamp, lastTimestamp))
@@ -126,6 +140,7 @@ func downloadImages(opts *LoopOptions, selectedTimes []time.Time) ([]image.Image
 	return images, nil
 }
 
+// SelectTimestamps selects the desired timestamps from the list of int timestamps returned by SLIDER.
 func SelectTimestamps(times []int, opts *LoopOptions) ([]time.Time, error) {
 	sort.Sort(sort.Reverse(sort.IntSlice(times)))
 	var selectedTimes []time.Time

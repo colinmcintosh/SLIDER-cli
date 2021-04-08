@@ -13,6 +13,7 @@ import (
 	"net/http"
 )
 
+// Full SLIDER URL Example:
 // https://rammb-slider.cira.colostate.edu/
 //		?sat=goes-16
 //		&z=1
@@ -39,8 +40,6 @@ import (
 //		&p%5B0%5D=geocolor
 //		&x=12664.071436031289
 //		&y=10806.47205375142
-
-// ? - https://rammb-slider.cira.colostate.edu/data/json/goes-16/full_disk/lat/white/latest_times_all.json
 
 // ImageURI is the request address for images. It contains the following fields:
 // 	- Date
@@ -71,6 +70,7 @@ const LatestTimesURI = "https://rammb-slider.cira.colostate.edu/data/json/%s/%s/
 // LatestTimes5760URI is the same as LatestTimesURI but with more times.
 const LatestTimes5760URI = "https://rammb-slider.cira.colostate.edu/data/json/%s/%s/%s/latest_times_5760.json"
 
+// AvailableDates returns the list of dates that SLIDER has available data for as ints in the form of YYYYMMDD.
 func AvailableDates(satellite *Satellite, sector *Sector, product *Product) ([]int, error) {
 	if satellite == nil {
 		return nil, fmt.Errorf("satellite must not be nil")
@@ -105,6 +105,7 @@ func AvailableDates(satellite *Satellite, sector *Sector, product *Product) ([]i
 	return data.DatesInt, nil
 }
 
+// LatestTimes returns the list of timestamps that SLIDER has available data for as ints in the form of YYYYMMDDhhmmss.
 func LatestTimes(satellite *Satellite, sector *Sector, product *Product, count int) ([]int, error) {
 	if satellite == nil {
 		return nil, fmt.Errorf("satellite must not be nil")
@@ -144,6 +145,7 @@ func LatestTimes(satellite *Satellite, sector *Sector, product *Product, count i
 	return data.TimestampsInt, nil
 }
 
+// ImageRequest contains the parameters required to request an individual image cell from SLIDER.
 type ImageRequest struct {
 	Date             string
 	Satellite        string
@@ -155,6 +157,7 @@ type ImageRequest struct {
 	SectionYPosition int
 }
 
+// DownloadImage downloads an individual image cell from SLIDER.
 func DownloadImage(request *ImageRequest) (image.Image, error) {
 	uri := fmt.Sprintf(ImageURI, request.Date, request.Satellite, request.Sector, request.Product,
 		request.ImageTimestamp, request.ZoomLevel, request.SectionYPosition, request.SectionXPosition)

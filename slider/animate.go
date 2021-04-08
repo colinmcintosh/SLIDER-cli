@@ -11,15 +11,23 @@ import (
 	"time"
 )
 
+// LoopStyle is the animation direction of the images, for example forward or backward.
 type LoopStyle int
 
 const (
+	// ForwardLoop animates loops with images in chronological order.
 	ForwardLoop LoopStyle = iota
+	// ReverseLoop animates loops in reverse order from ForwardLoop
 	ReverseLoop
+	// RockLoop animates the loop forward first then in reverse. Note that using the RockLoop style will cause
+	// animation file sizes to be nearly twice the size has a forward and reverse loops due there being twice the
+	// number of frames.
 	RockLoop
 )
 
-func AnimateImages(images []image.Image, delay int, style LoopStyle) (*gif.GIF, error) {
+// AnimateGIF animates the supplied images into a GIF image. This will convert RGB images to a 256-color palette
+// due to the GIF color limit of 256. This will likely result in some down-sampling of your image colors.
+func AnimateGIF(images []image.Image, delay int, style LoopStyle) (*gif.GIF, error) {
 	newGIF := new(gif.GIF)
 	log.Debug().Msgf("Animating %d images", len(images))
 	timeIn := time.Now()
