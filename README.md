@@ -113,3 +113,10 @@ Usage Examples:
 - [ ] Complete Sector List
 - [ ] Complete Product List
 - [ ] RAMMB/CIRA Watermark Overlays
+
+### Known Issues
+
+- The 10000x6000px images for GOES Bands 1, 2, 3, & 5 are missing because I
+  don't know of a good source for them without the map overlays already
+  included. If anyone knows where to find these images please open a GitHub
+  issue and let me know.
