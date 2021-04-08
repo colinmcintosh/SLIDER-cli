@@ -26,6 +26,7 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
+	"time"
 )
 
 var Version = "develop"
@@ -48,6 +49,10 @@ func ParseFlags() {
 		"See --zoom-list for the full list of allowed zoom levels.")
 	pflag.IntP("image-count", "i", 6, "Number of images in the loop.")
 	pflag.IntP("time-step", "t", 5, "Desired interval of image capture times in minutes.")
+	pflag.StringP("begin", "b", "", "Desired image capture time of the first image in the "+
+		"loop. Use the timestamp format YYYYMMDDhhmmss. This flag cannot be used with --end.")
+	pflag.StringP("end", "e", "", "Desired image capture time of the last image in the "+
+		"loop. Use the timestamp format YYYYMMDDhhmmss. This flag cannot be used with --begin.")
 	pflag.Int("speed", 15, "Desired frame rate in 100ths of a second. The lowest value accepted is 1.")
 	pflag.StringP("loop", "l", "forward", "Loop style. Options are 'forward', 'reverse', "+
 		"or 'rock'. Note that using 'rock' will nearly double the output animation file size.")
@@ -254,6 +259,24 @@ func handleFlags(config *viper.Viper) {
 			config.GetString("loop"))
 	}
 
+	var beginTime time.Time
+	if config.GetString("begin") != "" {
+		var err error
+		beginTime, err = time.Parse("20060102150405", config.GetString("begin"))
+		if err != nil {
+			log.Fatal().Msgf("unable to parse begin time: %s", config.GetString("begin"))
+		}
+	}
+
+	var endTime time.Time
+	if config.GetString("end") != "" {
+		var err error
+		endTime, err = time.Parse("20060102150405", config.GetString("end"))
+		if err != nil {
+			log.Fatal().Msgf("unable to parse end time: %s", config.GetString("end"))
+		}
+	}
+
 	err := slider.CreateLoop(&slider.LoopOptions{
 		Satellite:       satellite,
 		Sector:          sector,
@@ -263,6 +286,8 @@ func handleFlags(config *viper.Viper) {
 		Speed:           config.GetInt("speed"),
 		ZoomLevel:       config.GetInt("zoom"),
 		TimeStep:        config.GetInt("time-step"),
+		BeginTime:       beginTime,
+		EndTime:         endTime,
 		OutputDirectory: config.GetString("dir"),
 	})
 	if err != nil {

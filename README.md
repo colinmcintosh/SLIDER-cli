@@ -103,8 +103,8 @@ Usage Examples:
 - [ ] Map Overlays
 - [ ] Lat/Lon Overlays
 - [ ] RAMMB/CIRA Watermark Overlays
-- [ ] Begin Date
-- [ ] End Date
+- [x] Begin Timestamp
+- [x] End Timestamp
 - [x] Animated GIF
 - [ ] Animated PNG
 - [ ] Separate Images
@@ -131,3 +131,6 @@ Usage Examples:
   don't know of a good source for them without the map overlays already
   included. If anyone knows where to find these images please open a GitHub
   issue and let me know.
+- At this time you can only specify a begin timestamp or an end timestamp but
+  not both at the same time. In the future I want to be able to support that
+  feature as an alternative to specifying an image count.

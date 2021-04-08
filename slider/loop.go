@@ -48,6 +48,10 @@ type LoopOptions struct {
 	ZoomLevel int
 	// TimeStep is the interval between image capture times in minutes.
 	TimeStep int
+	// BeginTime is the desired capture time of the first image in the loop.
+	BeginTime time.Time
+	// EndTime is the desired capture time of the last image in the loop.
+	EndTime time.Time
 	// OutputDirectory is the directory to save output animations in.
 	OutputDirectory string
 	// AllowStaleImages allows imagery that is over one year old to be included in animations. Disallowing this old
@@ -155,12 +159,29 @@ func downloadImages(opts *LoopOptions, selectedTimes []time.Time) ([]image.Image
 	return images, nil
 }
 
-// SelectTimestamps selects the desired timestamps from the list of int timestamps returned by SLIDER.
+// SelectTimestamps selects the desired timestamps from the list of int timestamps returned by SLIDER. Timestamps
+// are returned in sorted chronological order.
 func SelectTimestamps(times []int, opts *LoopOptions) ([]time.Time, error) {
-	sort.Sort(sort.Reverse(sort.IntSlice(times)))
+	var selectedTimes timeSortable
+	var err error
+	if !opts.BeginTime.IsZero() {
+		selectedTimes, err = beginSearch(times, opts)
+	} else {
+		selectedTimes, err = endSearch(times, opts)
+	}
+	if err != nil {
+		return nil, err
+	}
+	sort.Sort(selectedTimes) // timestamps are sorted in chronological order
+	log.Debug().Msgf("Selected %d timestamps from available list", len(selectedTimes))
+	return selectedTimes, nil
+}
+
+func beginSearch(times []int, opts *LoopOptions) (timeSortable, error) {
+	sort.Sort(sort.IntSlice(times)) // timestamps are sorted in chronological order
 	var selectedTimes timeSortable
 	var count = 0
-	var target time.Time
+	var target = opts.BeginTime
 	for i, t := range times {
 		timestamp, err := time.Parse("20060102150405", strconv.Itoa(t))
 		if err != nil {
@@ -186,17 +207,54 @@ func SelectTimestamps(times []int, opts *LoopOptions) ([]time.Time, error) {
 			continue
 		}
 
+		log.Debug().Msgf("Including %v", timestamp)
+		selectedTimes = append(selectedTimes, timestamp)
+		target = timestamp.Add(time.Duration(opts.TimeStep) * time.Minute)
+		count++
+		if count >= opts.NumberOfImages {
+			break
+		}
+	}
+	return selectedTimes, nil
+}
+
+func endSearch(times []int, opts *LoopOptions) (timeSortable, error) {
+	sort.Sort(sort.Reverse(sort.IntSlice(times))) // timestamps are sorted in reverse chronological order
+	var selectedTimes timeSortable
+	var count = 0
+	var target = opts.EndTime
+	for i, t := range times {
+		timestamp, err := time.Parse("20060102150405", strconv.Itoa(t))
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse current timestamp '%v': %v", t, err)
+		}
+
+		if !opts.AllowStaleImages && timestamp.Add(366*24*time.Hour).Before(time.Now()) {
+			continue
+		}
+
+		if i+1 >= len(times) {
+			// Break early from the end of the loop to prevent a look-ahead failure
+			break
+		}
+
+		nextTimestamp, err := time.Parse("20060102150405", strconv.Itoa(times[i+1]))
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse next timestamp '%v': %v", t, err)
+		}
+		nextDistance := int(math.Abs(target.Sub(nextTimestamp).Seconds()))
+		currentDistance := int(math.Abs(target.Sub(timestamp).Seconds()))
+		if nextDistance < currentDistance {
+			continue
+		}
+
+		log.Debug().Msgf("Including %v", timestamp)
 		selectedTimes = append(selectedTimes, timestamp)
 		target = timestamp.Add(-1 * time.Duration(opts.TimeStep) * time.Minute)
 		count++
 		if count >= opts.NumberOfImages {
 			break
 		}
-	}
-	sort.Sort(selectedTimes)
-	log.Debug().Msgf("Selected %d timestamps from available list", len(selectedTimes))
-	for _, ts := range selectedTimes {
-		log.Debug().Msgf("Including %v", ts)
 	}
 	return selectedTimes, nil
 }
