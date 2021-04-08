@@ -24,14 +24,14 @@ effort. For more details on their effort check out this
 2018 [talk from AMS](https://ams.confex.com/ams/98Annual/webprogram/Paper336810.html)
 on SLIDER.
 
-Note: This is not an official product of NWS, NOAA, RAMMB, or CIRA.
+This is not an official product of NWS, NOAA, RAMMB, or CIRA.
 
 ## Download
 
 **Platforms Supported:** Windows, Linux, Mac
 
-Checkout the [Releases](https://github.com/colinmcintosh/SLIDER-cli/releases)
-page to download the latest version, or you can build the source code with
+Head to the [Releases](https://github.com/colinmcintosh/SLIDER-cli/releases)
+page to download the latest version. Or you can build the source code with
 `make build`, which requires Golang and CMake.
 
 ## Example Usage
@@ -102,6 +102,7 @@ Usage Examples:
 - [x] Time Step
 - [ ] Map Overlays
 - [ ] Lat/Lon Overlays
+- [ ] RAMMB/CIRA Watermark Overlays
 - [ ] Begin Date
 - [ ] End Date
 - [x] Animated GIF
@@ -109,10 +110,20 @@ Usage Examples:
 - [ ] Separate Images
 - [ ] Follow Feature
 - [ ] URL Parsing
-- [ ] Complete Satellite List
-- [ ] Complete Sector List
-- [ ] Complete Product List
-- [ ] RAMMB/CIRA Watermark Overlays
+- [x] GOES-16 Satellite
+- [x] GOES-17 Satellite
+- [ ] Himawari-8 Satellite
+- [ ] Meteosat-8 Satellite
+- [ ] Meteosat-11 Satellite
+- [ ] JPSS Satellite
+- [x] GOES Complete Sector List
+- [ ] Himawari-8 Complete Sector List
+- [ ] Meteosat Complete Sector List
+- [ ] JPSS Complete Sector List
+- [ ] GOES Complete Product List
+- [ ] Himawari-8 Complete Product List
+- [ ] Meteosat Complete Product List
+- [ ] JPSS Complete Product List
 
 ### Known Issues
 
