@@ -28,14 +28,6 @@ type LoopOptions struct {
 	zoom             *Zoom
 }
 
-type LoopStyle int
-
-const (
-	ForwardLoop LoopStyle = iota
-	ReverseLoop
-	RockLoop
-)
-
 func CreateLoop(opts *LoopOptions) error {
 	estimateCount := opts.NumberOfImages * opts.TimeStep / 5
 	latestTimesUnfiltered, err := LatestTimes(opts.Satellite, opts.Sector, opts.Product, estimateCount)

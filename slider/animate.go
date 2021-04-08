@@ -11,6 +11,14 @@ import (
 	"time"
 )
 
+type LoopStyle int
+
+const (
+	ForwardLoop LoopStyle = iota
+	ReverseLoop
+	RockLoop
+)
+
 func AnimateImages(images []image.Image, delay int, style LoopStyle) (*gif.GIF, error) {
 	newGIF := new(gif.GIF)
 	log.Debug().Msgf("Animating %d images", len(images))
@@ -42,10 +50,10 @@ func AnimateImages(images []image.Image, delay int, style LoopStyle) (*gif.GIF, 
 				newGIF.Image[i] = palettedImage
 				newGIF.Delay[i] = delay
 			case RockLoop:
-				newGIF.Image[i] = palettedImage
-				newGIF.Delay[i] = delay
-				newGIF.Image[(len(images)*2)-1-i] = palettedImage
-				newGIF.Delay[(len(images)*2)-1-i] = delay
+				newGIF.Image[len(images)-1-i] = palettedImage
+				newGIF.Delay[len(images)-1-i] = delay
+				newGIF.Image[len(images)+i] = palettedImage
+				newGIF.Delay[len(images)+i] = delay
 			}
 			lock.Unlock()
 			wg.Done()
