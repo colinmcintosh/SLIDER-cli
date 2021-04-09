@@ -58,6 +58,8 @@ func ParseFlags() {
 		"or 'rock'. Note that using 'rock' will nearly double the output animation file size.")
 
 	pflag.Bool("help", false, "Print help dialog.")
+	pflag.Bool("help-wrapped", false, "Print help dialog with text wrapped.")
+	_ = pflag.CommandLine.MarkHidden("help-wrapped")
 	pflag.BoolP("verbose", "v", false, "Enable verbose output.")
 	pflag.BoolP("version", "V", false, "Print version and exit.")
 	pflag.StringP("dir", "d", ".", "Output filename to save rendered animation in.")
@@ -66,18 +68,27 @@ func ParseFlags() {
 	pflag.Bool("allow-stale", false, "Allow imagery more than a year old -- filtering these images out"+
 		"helps eliminate issues with loops containing old data.")
 
+	pflag.CommandLine.SetOutput(os.Stdout)
 	pflag.Usage = func() {
-		_, _ = fmt.Fprintf(os.Stderr, "slider-cli version %s (Built %s)\n\n", Version, BuildTime)
-		_, _ = fmt.Fprintf(os.Stderr, "Usage:\n")
-		pflag.PrintDefaults()
-		_, _ = fmt.Fprintf(os.Stderr, "\nUsage Examples:\n")
-		_, _ = fmt.Fprintf(os.Stderr, "    ./slider-cli --satellite-list\n")
-		_, _ = fmt.Fprintf(os.Stderr, "    ./slider-cli --sector-list --satellite=goes-16\n")
-		_, _ = fmt.Fprintf(os.Stderr, "    ./slider-cli --satellite=goes-16 --sector=conus --product=geocolor -z=2\n")
-		_, _ = fmt.Fprintf(os.Stderr, "    ./slider-cli --satellite=goes-16 --sector=conus --product=band-1 -i=20 -t=10\n\n")
+		helpText(false)
 	}
 	pflag.ErrHelp = nil
 	pflag.Parse()
+}
+
+func helpText(wrapped bool) {
+	_, _ = fmt.Fprintf(os.Stdout, "slider-cli version %s (Built %s)\n\n", Version, BuildTime)
+	_, _ = fmt.Fprintf(os.Stdout, "Usage:\n")
+	if wrapped {
+		_, _ = fmt.Fprintf(os.Stdout, "%s\n", pflag.CommandLine.FlagUsagesWrapped(80))
+	} else {
+		pflag.PrintDefaults()
+	}
+	_, _ = fmt.Fprintf(os.Stdout, "\nUsage Examples:\n")
+	_, _ = fmt.Fprintf(os.Stdout, "    ./slider-cli --satellite-list\n")
+	_, _ = fmt.Fprintf(os.Stdout, "    ./slider-cli --sector-list --satellite=goes-16\n")
+	_, _ = fmt.Fprintf(os.Stdout, "    ./slider-cli --satellite=goes-16 --sector=conus --product=geocolor -z=2\n")
+	_, _ = fmt.Fprintf(os.Stdout, "    ./slider-cli --satellite=goes-16 --sector=conus --product=band-1 -i=20 -t=10\n\n")
 }
 
 func LoadConfig() (*viper.Viper, error) {
@@ -119,6 +130,10 @@ func main() {
 	}
 	if config.GetBool("help") {
 		pflag.Usage()
+		os.Exit(0)
+	}
+	if config.GetBool("help-wrapped") {
+		helpText(true)
 		os.Exit(0)
 	}
 	if config.GetBool("version") {

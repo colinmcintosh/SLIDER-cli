@@ -32,3 +32,6 @@ endif
 
 sync:
 	go get ./...
+
+usage: build
+	./tools/usage.sh
