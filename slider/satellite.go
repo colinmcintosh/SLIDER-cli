@@ -25,10 +25,10 @@ type Satellite struct {
 	Description string
 	// Value is the string sent to SLIDER for this satellite when requesting images
 	Value string
-	// Sectors contains a list of available sectors for this Satellite .
-	Sectors []*Sector
-	// Products contains a list of available products for this satellite.
-	Products []*Product
+	// Sectors contains a list of available sectors for this Satellite keyed by ID.
+	Sectors map[string]*Sector
+	// Products contains a list of available products for this satellite keyed by ID.
+	Products map[string]*Product
 	// ZoomLevels is the list of available zoom levels or resolutions for this satellite
 	ZoomLevels []*Zoom
 }
@@ -38,12 +38,14 @@ func (s *Satellite) ValidSector(sector *Sector) bool {
 	if s.Sectors == nil {
 		return false
 	}
-	for _, c := range s.Sectors {
-		if c == sector {
-			return true
-		}
+	c, ok := s.Sectors[sector.ID]
+	if !ok {
+		return false
 	}
-	return false
+	if c != sector {
+		return false
+	}
+	return true
 }
 
 // ValidProduct returns true if the provided product is available for this satellite.
@@ -51,12 +53,14 @@ func (s *Satellite) ValidProduct(product *Product) bool {
 	if s.Products == nil {
 		return false
 	}
-	for _, p := range s.Products {
-		if p == product {
-			return true
-		}
+	p, ok := s.Products[product.ID]
+	if !ok {
+		return false
 	}
-	return false
+	if p != product {
+		return false
+	}
+	return true
 }
 
 // ValidSectorProduct returns true if the provided sector and products are available for this satellite AND the
@@ -77,44 +81,7 @@ func (s *Satellite) ValidSectorProduct(sector *Sector, product *Product) bool {
 
 // Satellites contains all of the available and included satellites.
 var Satellites = map[string]*Satellite{
-	GOES16Satellite.ID: GOES16Satellite,
-	GOES17Satellite.ID: GOES17Satellite,
-}
-
-// GOES 16 Satellite
-var GOES16Satellite = &Satellite{
-	ID:           "goes-16",
-	FriendlyName: "GOES-16",
-	Description:  "East, 75.2W",
-	Value:        "goes-16",
-	Products: []*Product{
-		GOESBand1Product,
-		CIRAGeoColorProduct,
-	},
-	Sectors: []*Sector{
-		GOESFullDiskSector,
-		GOESCONUSSector,
-		GOESMesoscale1Sector,
-		GOESMesoscale2Sector,
-	},
-	ZoomLevels: GOESHimawariZoomLevels,
-}
-
-// GOES 17 Satellite
-var GOES17Satellite = &Satellite{
-	ID:           "goes-17",
-	FriendlyName: "GOES-17",
-	Description:  "West, 137.2W",
-	Value:        "goes-17",
-	Products: []*Product{
-		GOESBand1Product,
-		CIRAGeoColorProduct,
-	},
-	Sectors: []*Sector{
-		GOESFullDiskSector,
-		GOESCONUSSector,
-		GOESMesoscale1Sector,
-		GOESMesoscale2Sector,
-	},
-	ZoomLevels: GOESHimawariZoomLevels,
+	GOES16Satellite.ID:    GOES16Satellite,
+	GOES17Satellite.ID:    GOES17Satellite,
+	Himawari8Satellite.ID: Himawari8Satellite,
 }

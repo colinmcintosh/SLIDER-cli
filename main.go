@@ -181,12 +181,8 @@ func handleFlags(config *viper.Viper) {
 			log.Fatal().Msg("You must set --satellite first to select a sector.")
 			os.Exit(1)
 		}
-		sector = slider.Sectors[id]
+		sector = satellite.Sectors[id]
 		if sector == nil {
-			log.Fatal().Msgf("'%s' is not a valid satellite sector. "+
-				"Check --sector-list for the available options.", id)
-		}
-		if !satellite.ValidSector(sector) {
 			log.Fatal().Msgf("'%s' is not a valid sector for the '%s' satellite. "+
 				"Check --sector-list for the available options.", id, satellite.ID)
 		}
@@ -231,12 +227,8 @@ func handleFlags(config *viper.Viper) {
 			log.Fatal().Msg("You must set --satellite and --sector first to select a product. ")
 			os.Exit(1)
 		}
-		product = slider.Products[id]
-		if product == nil {
-			log.Fatal().Msgf("'%s' is not a valid satellite product. "+
-				"Check --product-list for the available options.", id)
-		}
-		if !satellite.ValidSectorProduct(sector, product) {
+		product = satellite.Products[id]
+		if product == nil || sector.ProductMissing(product) {
 			log.Fatal().Msgf("'%s' is not a valid sector product for the '%s' satellite. "+
 				"Check --product-list for the available options.", id, satellite.ID)
 		}

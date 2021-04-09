@@ -29,6 +29,8 @@ func (z *Zoom) NumCells() int {
 	return int(math.Pow(2, float64(z.Level)))
 }
 
+// Below are common zoom level lists not specific to any single satellite system.
+
 // GOESHimawariZoomLevels zoom level is a common zoom level list for both
 // GOES and Himawari satellites.
 var GOESHimawariZoomLevels = []*Zoom{

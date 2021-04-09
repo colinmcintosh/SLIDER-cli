@@ -29,28 +29,7 @@ type Product struct {
 	ZoomAdjust int
 }
 
-// Products contains all of the available and included products.
-var Products = map[string]*Product{
-	GOESBand1Product.ID:    GOESBand1Product,
-	GOESBand2Product.ID:    GOESBand2Product,
-	CIRAGeoColorProduct.ID: CIRAGeoColorProduct,
-}
-
-// GOES Band 1 Product
-var GOESBand1Product = &Product{
-	ID:           "band-1",
-	FriendlyName: "Band 1",
-	Description:  "0.47 µm 'Blue'",
-	Value:        "band_01",
-}
-
-// GOES Band 2 Product
-var GOESBand2Product = &Product{
-	ID:           "band-2",
-	FriendlyName: "Band 2",
-	Description:  "0.64 µm 'Red'",
-	Value:        "band_02",
-}
+// Below are common products not specific to any single satellite system.
 
 // CIRA GeoColor Product
 var CIRAGeoColorProduct = &Product{
