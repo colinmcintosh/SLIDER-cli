@@ -97,7 +97,7 @@ func AvailableDates(satellite *Satellite, sector *Sector, product *Product) ([]i
 		return nil, fmt.Errorf("product must not be nil")
 	}
 
-	uri := fmt.Sprintf(AvailableDatesURI, satellite.ID, sector.ID, product.Value)
+	uri := fmt.Sprintf(AvailableDatesURI, satellite.Value, sector.Value, product.Value)
 	resp, err := http.Get(uri)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get available dates: %w", err)
@@ -134,9 +134,9 @@ func LatestTimes(satellite *Satellite, sector *Sector, product *Product, count i
 
 	var uri string
 	if count > 100 {
-		uri = fmt.Sprintf(LatestTimes5760URI, satellite.ID, sector.ID, product.Value)
+		uri = fmt.Sprintf(LatestTimes5760URI, satellite.Value, sector.Value, product.Value)
 	} else {
-		uri = fmt.Sprintf(LatestTimesURI, satellite.ID, sector.ID, product.Value)
+		uri = fmt.Sprintf(LatestTimesURI, satellite.Value, sector.Value, product.Value)
 	}
 	resp, err := http.Get(uri)
 	if err != nil {
@@ -154,7 +154,7 @@ func LatestTimes(satellite *Satellite, sector *Sector, product *Product, count i
 	})
 	err = json.Unmarshal(body, data)
 	if err != nil {
-		return nil, fmt.Errorf("unable to decode available dates JSON: %w", err)
+		return nil, fmt.Errorf("unable to decode latest times JSON: %w", err)
 	}
 
 	return data.TimestampsInt, nil
