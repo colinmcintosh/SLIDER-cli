@@ -80,7 +80,7 @@ func helpText(wrapped bool) {
 	_, _ = fmt.Fprintf(os.Stdout, "slider-cli version %s (Built %s)\n\n", Version, BuildTime)
 	_, _ = fmt.Fprintf(os.Stdout, "Usage:\n")
 	if wrapped {
-		_, _ = fmt.Fprintf(os.Stdout, "%s\n", pflag.CommandLine.FlagUsagesWrapped(80))
+		_, _ = fmt.Fprintf(os.Stdout, "%s\n", pflag.CommandLine.FlagUsagesWrapped(100))
 	} else {
 		pflag.PrintDefaults()
 	}
