@@ -22,6 +22,7 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"net/url"
 	"path"
 	"sort"
 	"strconv"
@@ -269,4 +270,106 @@ func makeFileName(opts *LoopOptions, startTime string, endTime string) string {
 	return fmt.Sprintf("cira-rammb-slider_%s_%s_%s_%dx%d_%s-%s",
 		opts.Satellite.ID, opts.Sector.ID, opts.Product.ID, opts.Sector.XSize(opts.zoom), opts.Sector.YSize(opts.zoom),
 		startTime, endTime)
+}
+
+func LoopOptsFromURL(uri string) (*LoopOptions, error) {
+	u, err := url.Parse(uri)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse URL: %w", err)
+	}
+	data, err := url.ParseQuery(u.RawQuery)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse URL query parameters: %w", err)
+	}
+
+	var satellite *Satellite
+	if data.Get("sat") != "" {
+		for _, s := range Satellites {
+			if s.Value == data.Get("sat") {
+				satellite = s
+			}
+		}
+	}
+	if satellite == nil {
+		return nil, fmt.Errorf("unable to parse satellite from URL: '%s'", data.Get("sat"))
+	}
+
+	var sector *Sector
+	if data.Get("sec") != "" {
+		for _, c := range satellite.Sectors {
+			if c.Value == data.Get("sec") {
+				sector = c
+			}
+		}
+	}
+	if sector == nil {
+		return nil, fmt.Errorf("unable to parse sector from URL: '%s'", data.Get("sec"))
+	}
+
+	var product *Product
+	if data.Get("p[0]") != "" {
+		for _, p := range satellite.Products {
+			if p.Value == data.Get("p[0]") {
+				product = p
+			}
+		}
+	}
+	if product == nil {
+		return nil, fmt.Errorf("unable to parse product from URL: '%s'", data.Get("p[0]"))
+	}
+
+	var loop LoopStyle
+	switch data.Get("motion") {
+	case "loop":
+		loop = ForwardLoop
+	case "rev":
+		loop = ReverseLoop
+	case "rock":
+		loop = RockLoop
+	default:
+		return nil, fmt.Errorf("unable to parse loop style: '%s'", data.Get("motion"))
+	}
+
+	count, err := strconv.Atoi(data.Get("im"))
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse image count: '%s'", data.Get("im"))
+	}
+
+	zoom, err := strconv.Atoi(data.Get("z"))
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse zoom: '%s'", data.Get("z"))
+	}
+
+	speed, err := strconv.Atoi(data.Get("speed"))
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse zoom: '%s'", data.Get("z"))
+	}
+	speed = speed / 10
+
+	var beginTime time.Time
+	if i, _ := strconv.Atoi(data.Get("st")); i > 0 {
+		beginTime, err = time.Parse("20060102150405", data.Get("st"))
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse begin time: '%s'", data.Get("st"))
+		}
+	}
+	var endTime time.Time
+	if i, _ := strconv.Atoi(data.Get("et")); i > 0 {
+		endTime, err = time.Parse("20060102150405", data.Get("et"))
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse begin time: '%s'", data.Get("et"))
+		}
+	}
+
+	return &LoopOptions{
+		Satellite:      satellite,
+		Sector:         sector,
+		Product:        product,
+		Loop:           loop,
+		NumberOfImages: count,
+		Speed:          speed,
+		ZoomLevel:      zoom,
+		BeginTime:      beginTime,
+		EndTime:        endTime,
+	}, nil
 }

@@ -33,5 +33,8 @@ endif
 sync:
 	go get ./...
 
+test:
+	go test ./...
+
 usage: build
-	./tools/usage.sh
+	./tools/usage.shm

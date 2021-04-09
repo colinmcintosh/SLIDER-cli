@@ -24,6 +24,8 @@ import (
 	"github.com/spf13/viper"
 	"os"
 	"os/signal"
+	"runtime"
+	"sort"
 	"strconv"
 	"syscall"
 	"time"
@@ -56,6 +58,8 @@ func ParseFlags() {
 	pflag.Int("speed", 15, "Desired frame rate in 100ths of a second. The lowest value accepted is 1.")
 	pflag.StringP("loop", "l", "forward", "Loop style. Options are 'forward', 'reverse', "+
 		"or 'rock'. Note that using 'rock' will nearly double the output animation file size.")
+	pflag.String("decode", "", "Decode a SLIDER URL into a loop config and create an animation. "+
+		"You must supply --time-step as well as that can't be decoded from the URL.")
 
 	pflag.Bool("help", false, "Print help dialog.")
 	pflag.Bool("help-wrapped", false, "Print help dialog with text wrapped.")
@@ -105,7 +109,13 @@ func LoadConfig() (*viper.Viper, error) {
 }
 
 func main() {
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	writer := zerolog.ConsoleWriter{
+		Out: os.Stderr,
+	}
+	if runtime.GOOS != "linux" {
+		writer.NoColor = true
+	}
+	log.Logger = log.Output(writer)
 	zerolog.SetGlobalLevel(zerolog.WarnLevel)
 
 	var deferred []func()
@@ -146,9 +156,30 @@ func main() {
 }
 
 func handleFlags(config *viper.Viper) {
+	if config.GetString("decode") != "" {
+		opts, err := slider.LoopOptsFromURL(config.GetString("decode"))
+		if err != nil {
+			log.Fatal().Msgf("unable to create loop opts from URL: %v", err)
+		}
+		opts.OutputDirectory = config.GetString("dir")
+		opts.TimeStep = config.GetInt("time-step")
+
+		err = slider.CreateLoop(opts)
+		if err != nil {
+			log.Fatal().Msgf("unable to create loop from decoded URL: %v", err)
+		}
+		os.Exit(0)
+	}
+
 	if config.GetBool("satellite-list") {
 		fmt.Println("Available Satellites")
-		for _, satellite := range slider.Satellites {
+		keys := make([]string, 0, len(slider.Satellites))
+		for k := range slider.Satellites {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			satellite := slider.Satellites[k]
 			fmt.Println(fmt.Sprintf("%20s = %s (%s)", satellite.ID, satellite.FriendlyName, satellite.Description))
 		}
 		os.Exit(0)
@@ -168,8 +199,14 @@ func handleFlags(config *viper.Viper) {
 			log.Fatal().Msg("You must set --satellite first to list available sectors.")
 			os.Exit(1)
 		}
+		keys := make([]string, 0, len(satellite.Sectors))
+		for k := range satellite.Sectors {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
 		fmt.Println(fmt.Sprintf("Available Sectors on Satellite %s", satellite.FriendlyName))
-		for _, sector := range satellite.Sectors {
+		for _, k := range keys {
+			sector := satellite.Sectors[k]
 			fmt.Println(fmt.Sprintf("%20s = %s", sector.ID, sector.FriendlyName))
 		}
 		os.Exit(0)
@@ -209,14 +246,21 @@ func handleFlags(config *viper.Viper) {
 			log.Fatal().Msg("You must set --satellite and --sector first to list available products.")
 			os.Exit(1)
 		}
+		keys := make([]string, 0, len(satellite.Products))
+		for k := range satellite.Products {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
 		fmt.Println(fmt.Sprintf("Available Products for Sector %s on Satellite %s",
 			sector.FriendlyName, satellite.FriendlyName))
 
-		for _, product := range satellite.Products {
+		for _, k := range keys {
+			product := satellite.Products[k]
 			if sector.ProductMissing(product) {
 				continue
 			}
-			fmt.Println(fmt.Sprintf("%20s = %s (%s)", product.ID, product.FriendlyName, product.Description))
+			fmt.Println(fmt.Sprintf("%30s = %s (%s)", product.ID, product.FriendlyName, product.Description))
 		}
 		os.Exit(0)
 	}
@@ -300,4 +344,5 @@ func handleFlags(config *viper.Viper) {
 	if err != nil {
 		log.Fatal().Msgf("unable to create loop: %v", err)
 	}
+	os.Exit(0)
 }

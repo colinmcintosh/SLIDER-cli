@@ -114,7 +114,7 @@ Usage Examples:
 - [ ] Animated PNG
 - [ ] Separate Images
 - [ ] Follow Feature
-- [ ] URL Parsing
+- [x] URL Parsing
 - [x] GOES-16 Satellite
 - [x] GOES-17 Satellite
 - [x] Himawari-8 Satellite
