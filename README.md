@@ -1,9 +1,15 @@
 # RAMMB/CIRA SLIDER CLI
 
+[![License](https://img.shields.io/github/license/colinmcintosh/SLIDER-cli.svg)](https://github.com/colinmcintosh/SLIDER-cli/blob/main/LICENSE)
+[![GoDoc](https://godoc.org/github.com/colinmcintosh/SLIDER-cli/slider?status.svg)](https://godoc.org/github.com/colinmcintosh/SLIDER-cli/slider)
+[![Testing](https://github.com/colinmcintosh/SLIDER-cli/actions/workflows/build-main.yml/badge.svg?branch=main)](https://github.com/colinmcintosh/SLIDER-cli/actions/workflows/build-main.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/colinmcintosh/SLIDER-cli)](https://goreportcard.com/report/github.com/colinmcintosh/SLIDER-cli)
+[![Release](https://img.shields.io/github/release/colinmcintosh/SLIDER-cli.svg)](https://github.com/colinmcintosh/SLIDER-cli/releases/latest)
+
 A command-line implementation of the
 RAMMB/CIRA [SLIDER tool](https://rammb-slider.cira.colostate.edu/)
-in Golang. This tool downloads NOAA images taken by weather satellites in space
-and creates animations/GIFs from those images. See an example below.
+in Golang. This tool downloads NOAA images taken by weather satellites in space and creates
+animations/GIFs from those images. See an example below.
 
 SLIDER is
 the [Satellite Loop Interactive Data Explorer in Real-time](https://www.satelliteconferences.noaa.gov/2017/doc/poster/94.pdf)
