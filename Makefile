@@ -37,4 +37,4 @@ test:
 	go test ./...
 
 usage: build
-	./tools/usage.shm
+	./tools/usage.sh

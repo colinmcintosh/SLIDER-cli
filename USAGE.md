@@ -1,5 +1,5 @@
 ```
-slider-cli version v0.2.0-12-gb1fe590-b1fe590 (Built 2021-04-09T03:59:39Z)
+slider-cli version v0.3.0-1-g8113d50-8113d50 (Built 2021-04-09T23:18:56Z)
 
 Usage:
       --allow-stale        Allow imagery more than a year old -- filtering these images
@@ -7,6 +7,8 @@ Usage:
   -b, --begin string       Desired image capture time of the first image in the loop. Use the
                            timestamp format YYYYMMDDhhmmss. This flag cannot be used with --end.
       --date-list          Print a list of available dates
+      --decode string      Decode a SLIDER URL into a loop config and create an animation. You
+                           must supply --time-step as well as that can't be decoded from the URL.
   -d, --dir string         Output filename to save rendered animation in. (default ".")
   -e, --end string         Desired image capture time of the last image in the loop. Use the
                            timestamp format YYYYMMDDhhmmss. This flag cannot be used with --begin.
@@ -41,3 +43,4 @@ Usage Examples:
     ./slider-cli --satellite=goes-16 --sector=conus --product=geocolor -z=2
     ./slider-cli --satellite=goes-16 --sector=conus --product=band-1 -i=20 -t=10
 ```
+
