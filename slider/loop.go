@@ -42,6 +42,8 @@ type LoopOptions struct {
 	Loop LoopStyle
 	// NumberOfImages is the number of frames in the output animation.
 	NumberOfImages int
+	// Angle is the number of degrees to rotate the image.
+	Angle float64
 	// Speed is the interval between frames. A higher number increases the delay between frames.
 	Speed int
 	// ZoomLevel is the zoom level to request imagery for. Increasing ZoomLevel increases the output animation
@@ -136,6 +138,11 @@ func downloadImages(opts *LoopOptions, selectedTimes []time.Time) ([]image.Image
 			if opts.Sector.CropRatioX > 0 && opts.Sector.CropRatioY > 0 {
 				canvas = imaging.CropAnchor(canvas, opts.Sector.XSize(opts.zoom), opts.Sector.YSize(opts.zoom), imaging.Center)
 			}
+
+			if opts.Angle != 0 {
+				canvas = imaging.Rotate(canvas, opts.Angle, image.Transparent)
+			}
+
 			lock.Lock()
 			images[i] = canvas
 			lock.Unlock()
@@ -335,6 +342,11 @@ func LoopOptsFromURL(uri string) (*LoopOptions, error) {
 		return nil, fmt.Errorf("unable to parse image count: '%s'", data.Get("im"))
 	}
 
+	angle, err := strconv.Atoi(data.Get("angle"))
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse angle: '%s'", data.Get("angle"))
+	}
+
 	zoom, err := strconv.Atoi(data.Get("z"))
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse zoom: '%s'", data.Get("z"))
@@ -366,6 +378,7 @@ func LoopOptsFromURL(uri string) (*LoopOptions, error) {
 		Sector:         sector,
 		Product:        product,
 		Loop:           loop,
+		Angle:          float64(angle),
 		NumberOfImages: count,
 		Speed:          speed,
 		ZoomLevel:      zoom,

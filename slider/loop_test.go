@@ -28,6 +28,7 @@ func TestLoopOptsFromURL(t *testing.T) {
 	require.Equal(t, HimawariFullDiskSector, got.Sector, "Incorrect sector")
 	require.Equal(t, CIRAGeoColorProduct, got.Product, "Incorrect product")
 	require.Equal(t, ForwardLoop, got.Loop, "Incorrect loop style")
+	require.Equal(t, float64(0), got.Angle, "Incorrect angle")
 	require.Equal(t, 12, got.NumberOfImages, "Incorrect number of images")
 	require.Equal(t, 13, got.Speed, "Incorrect speed")
 	require.Equal(t, 0, got.ZoomLevel, "Incorrect zoom")

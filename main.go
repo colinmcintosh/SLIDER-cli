@@ -56,6 +56,7 @@ func ParseFlags() {
 	pflag.StringP("end", "e", "", "Desired image capture time of the last image in the "+
 		"loop. Use the timestamp format YYYYMMDDhhmmss. This flag cannot be used with --begin.")
 	pflag.Int("speed", 15, "Desired frame rate in 100ths of a second. The lowest value accepted is 1.")
+	pflag.Int("angle", 0, "Degrees to rotate the animation.")
 	pflag.StringP("loop", "l", "forward", "Loop style. Options are 'forward', 'reverse', "+
 		"or 'rock'. Note that using 'rock' will nearly double the output animation file size.")
 	pflag.String("decode", "", "Decode a SLIDER URL into a loop config and create an animation. "+
@@ -334,6 +335,7 @@ func handleFlags(config *viper.Viper) {
 		Product:         product,
 		Loop:            loop,
 		NumberOfImages:  config.GetInt("image-count"),
+		Angle:           float64(config.GetInt("angle")),
 		Speed:           config.GetInt("speed"),
 		ZoomLevel:       config.GetInt("zoom"),
 		TimeStep:        config.GetInt("time-step"),

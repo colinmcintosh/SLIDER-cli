@@ -51,11 +51,12 @@ page to download the latest version. Or you can build the source code with
 ## Help Dialog
 
 ```
-slider-cli version v0.3.0-1-g8113d50-8113d50 (Built 2021-04-09T23:18:56Z)
+slider-cli version v0.3.0-2-g96b20c8-96b20c8 (Built 2021-04-09T23:45:32Z)
 
 Usage:
       --allow-stale        Allow imagery more than a year old -- filtering these images
                            outhelps eliminate issues with loops containing old data.
+      --angle int          Degrees to rotate the animation.
   -b, --begin string       Desired image capture time of the first image in the loop. Use the
                            timestamp format YYYYMMDDhhmmss. This flag cannot be used with --end.
       --date-list          Print a list of available dates
@@ -104,7 +105,7 @@ Usage Examples:
 - [x] Speed
 - [x] Zoom (Resolution)
 - [ ] Pan/Crop
-- [ ] Rotation
+- [x] Rotation/Angle
 - [ ] Slider
 - [x] Satellite Selection
 - [x] Sector Selection
