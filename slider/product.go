@@ -37,4 +37,67 @@ var CIRAGeoColorProduct = &Product{
 	FriendlyName: "GeoColor",
 	Description:  "CIRA",
 	Value:        "geocolor",
+	ZoomAdjust:   1,
+}
+
+// CIRA Proxy Visible Product
+var CIRAProxyVisibleProduct = &Product{
+	ID:           "proxy-visible",
+	FriendlyName: "Proxy Visible",
+	Description:  "CIRA",
+	Value:        "cira_proxy_visible",
+}
+
+// CIRA Shortwave Albedo Product
+var CIRAShortwaveAlbedoProduct = &Product{
+	ID:           "shortwave-albedo",
+	FriendlyName: "Shortwave Albedo",
+	Description:  "CIRA",
+	Value:        "shortwave_albedo_cira",
+	ZoomAdjust:   2,
+}
+
+// CIRA Dust DEBRA Product
+var CIRADustDEBRAProduct = &Product{
+	ID:           "debra",
+	FriendlyName: "Dust - DEBRA",
+	Description:  "CIRA",
+	Value:        "cira_debra_dust",
+	ZoomAdjust:   2,
+}
+
+// CIRA Visible Albedo Product
+var CIRAVisibleAlbedoProduct = &Product{
+	ID:           "visible-albedo",
+	FriendlyName: "Visible Albedo",
+	Description:  "CIRA",
+	Value:        "visible_albedo_cira",
+	ZoomAdjust:   2,
+}
+
+// CIRA Snow/Cloud Product
+var CIRASnowCloudProduct = &Product{
+	ID:           "snow-cloud",
+	FriendlyName: "Snow/Cloud",
+	Description:  "CIRA",
+	Value:        "cira_cloud_snow_discriminator",
+	ZoomAdjust:   1,
+}
+
+// CIRA Snow/Cloud-Layers Product
+var CIRASnowCloudLayersProduct = &Product{
+	ID:           "snow-cloud-layers",
+	FriendlyName: "Snow/Cloud-Layers",
+	Description:  "CIRA",
+	Value:        "cira_high_low_cloud_and_snow",
+	ZoomAdjust:   1,
+}
+
+// Split Window Difference Product
+var SplitWindowDifferenceProduct = &Product{
+	ID:           "split-window-difference",
+	FriendlyName: "Split Window Difference",
+	Description:  "10.3 µm - 12.3 µm ",
+	Value:        "split_window_difference_10_3-12_3",
+	ZoomAdjust:   2,
 }

@@ -117,12 +117,12 @@ Usage Examples:
 - [ ] URL Parsing
 - [x] GOES-16 Satellite
 - [x] GOES-17 Satellite
-- [ ] Himawari-8 Satellite
+- [x] Himawari-8 Satellite
 - [ ] Meteosat-8 Satellite
 - [ ] Meteosat-11 Satellite
 - [ ] JPSS Satellite
 - [x] GOES Complete Sector List
-- [ ] Himawari-8 Complete Sector List
+- [x] Himawari-8 Complete Sector List
 - [ ] Meteosat Complete Sector List
 - [ ] JPSS Complete Sector List
 - [ ] GOES Complete Product List

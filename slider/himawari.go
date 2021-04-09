@@ -22,7 +22,11 @@ var Himawari8Satellite = &Satellite{
 	Description:  "Japan, 140.7E",
 	Value:        "himawari",
 	Products: map[string]*Product{
-		CIRAGeoColorProduct.ID: CIRAGeoColorProduct,
+		CIRAGeoColorProduct.ID:          CIRAGeoColorProduct,
+		CIRAShortwaveAlbedoProduct.ID:   CIRAShortwaveAlbedoProduct,
+		CIRADustDEBRAProduct.ID:         CIRADustDEBRAProduct,
+		CIRAVisibleAlbedoProduct.ID:     CIRAVisibleAlbedoProduct,
+		SplitWindowDifferenceProduct.ID: SplitWindowDifferenceProduct,
 	},
 	Sectors: map[string]*Sector{
 		HimawariFullDiskSector.ID:   HimawariFullDiskSector,

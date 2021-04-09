@@ -42,9 +42,29 @@ var GOES17Satellite = &Satellite{
 	Description:  "West, 137.2W",
 	Value:        "goes-17",
 	Products: map[string]*Product{
-		GOESBand1Product.ID:    GOESBand1Product,
-		GOESBand2Product.ID:    GOESBand2Product,
-		CIRAGeoColorProduct.ID: CIRAGeoColorProduct,
+		GOESBand1Product.ID:             GOESBand1Product,
+		GOESBand2Product.ID:             GOESBand2Product,
+		GOESBand3Product.ID:             GOESBand3Product,
+		GOESBand4Product.ID:             GOESBand4Product,
+		GOESBand5Product.ID:             GOESBand5Product,
+		GOESBand6Product.ID:             GOESBand6Product,
+		GOESBand7Product.ID:             GOESBand7Product,
+		GOESBand8Product.ID:             GOESBand8Product,
+		GOESBand9Product.ID:             GOESBand9Product,
+		GOESBand10Product.ID:            GOESBand10Product,
+		GOESBand11Product.ID:            GOESBand11Product,
+		GOESBand12Product.ID:            GOESBand12Product,
+		GOESBand13Product.ID:            GOESBand13Product,
+		GOESBand14Product.ID:            GOESBand14Product,
+		GOESBand15Product.ID:            GOESBand15Product,
+		GOESBand16Product.ID:            GOESBand16Product,
+		CIRAGeoColorProduct.ID:          CIRAGeoColorProduct,
+		CIRAProxyVisibleProduct.ID:      CIRADustDEBRAProduct,
+		CIRAShortwaveAlbedoProduct.ID:   CIRAShortwaveAlbedoProduct,
+		CIRADustDEBRAProduct.ID:         CIRADustDEBRAProduct,
+		CIRASnowCloudProduct.ID:         CIRASnowCloudProduct,
+		CIRASnowCloudLayersProduct.ID:   CIRASnowCloudLayersProduct,
+		SplitWindowDifferenceProduct.ID: SplitWindowDifferenceProduct,
 	},
 	Sectors: map[string]*Sector{
 		GOESCONUSSector.ID:      GOESCONUSSector,
@@ -103,6 +123,7 @@ var GOESBand1Product = &Product{
 	FriendlyName: "Band 1",
 	Description:  "0.47 µm 'Blue'",
 	Value:        "band_01",
+	ZoomAdjust:   1,
 }
 
 // GOES Band 2 Product
@@ -111,4 +132,130 @@ var GOESBand2Product = &Product{
 	FriendlyName: "Band 2",
 	Description:  "0.64 µm 'Red'",
 	Value:        "band_02",
+}
+
+// GOES Band 3 Product
+var GOESBand3Product = &Product{
+	ID:           "band-3",
+	FriendlyName: "Band 3",
+	Description:  "0.86 µm 'Veggie'",
+	Value:        "band_03",
+	ZoomAdjust:   1,
+}
+
+// GOES Band 4 Product
+var GOESBand4Product = &Product{
+	ID:           "band-4",
+	FriendlyName: "Band 4",
+	Description:  "1.37 µm 'Cirrus'",
+	Value:        "band_04",
+	ZoomAdjust:   2,
+}
+
+// GOES Band 5 Product
+var GOESBand5Product = &Product{
+	ID:           "band-5",
+	FriendlyName: "Band 5",
+	Description:  "1.6 µm 'Snow/Ice'",
+	Value:        "band_05",
+	ZoomAdjust:   1,
+}
+
+// GOES Band 6 Product
+var GOESBand6Product = &Product{
+	ID:           "band-6",
+	FriendlyName: "Band 6",
+	Description:  "2.2 µm 'Cloud Particle Size'",
+	Value:        "band_06",
+	ZoomAdjust:   2,
+}
+
+// GOES Band 7 Product
+var GOESBand7Product = &Product{
+	ID:           "band-7",
+	FriendlyName: "Band 7",
+	Description:  "3.9 µm 'Shortwave Window'",
+	Value:        "band_07",
+	ZoomAdjust:   2,
+}
+
+// GOES Band 8 Product
+var GOESBand8Product = &Product{
+	ID:           "band-8",
+	FriendlyName: "Band 8",
+	Description:  "6.2 µm 'Upper-Level Tropospheric Water Vapor'",
+	Value:        "band_08",
+	ZoomAdjust:   2,
+}
+
+// GOES Band 9 Product
+var GOESBand9Product = &Product{
+	ID:           "band-9",
+	FriendlyName: "Band 9",
+	Description:  "6.9 µm 'Mid-Level Tropospheric Water Vapor'",
+	Value:        "band_09",
+	ZoomAdjust:   2,
+}
+
+// GOES Band 10 Product
+var GOESBand10Product = &Product{
+	ID:           "band-10",
+	FriendlyName: "Band 10",
+	Description:  "7.3 µm 'Lower-level Water Vapor'",
+	Value:        "band_10",
+	ZoomAdjust:   2,
+}
+
+// GOES Band 11 Product
+var GOESBand11Product = &Product{
+	ID:           "band-11",
+	FriendlyName: "Band 11",
+	Description:  "8.4 µm 'Cloud-Top Phase'",
+	Value:        "band_11",
+	ZoomAdjust:   2,
+}
+
+// GOES Band 12 Product
+var GOESBand12Product = &Product{
+	ID:           "band-12",
+	FriendlyName: "Band 12",
+	Description:  "9.6 µm 'Ozone'",
+	Value:        "band_12",
+	ZoomAdjust:   2,
+}
+
+// GOES Band 13 Product
+var GOESBand13Product = &Product{
+	ID:           "band-13",
+	FriendlyName: "Band 13",
+	Description:  "10.3 µm 'Clean & IR Longwave Window'",
+	Value:        "band_13",
+	ZoomAdjust:   2,
+}
+
+// GOES Band 14 Product
+var GOESBand14Product = &Product{
+	ID:           "band-14",
+	FriendlyName: "Band 14",
+	Description:  "11.2 µm 'IR Longwave Window'",
+	Value:        "band_14",
+	ZoomAdjust:   2,
+}
+
+// GOES Band 15 Product
+var GOESBand15Product = &Product{
+	ID:           "band-15",
+	FriendlyName: "Band 15",
+	Description:  "12.3 µm '\"Dirty\" Longwave Window'",
+	Value:        "band_15",
+	ZoomAdjust:   2,
+}
+
+// GOES Band 16 Product
+var GOESBand16Product = &Product{
+	ID:           "band-16",
+	FriendlyName: "Band 16",
+	Description:  "13.3 µm '\"CO2\" Longwave Infrared",
+	Value:        "band_16",
+	ZoomAdjust:   2,
 }
