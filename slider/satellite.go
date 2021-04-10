@@ -81,7 +81,9 @@ func (s *Satellite) ValidSectorProduct(sector *Sector, product *Product) bool {
 
 // Satellites contains all of the available and included satellites.
 var Satellites = map[string]*Satellite{
-	GOES16Satellite.ID:    GOES16Satellite,
-	GOES17Satellite.ID:    GOES17Satellite,
-	Himawari8Satellite.ID: Himawari8Satellite,
+	GOES16Satellite.ID:     GOES16Satellite,
+	GOES17Satellite.ID:     GOES17Satellite,
+	Himawari8Satellite.ID:  Himawari8Satellite,
+	Meteosat8Satellite.ID:  Meteosat8Satellite,
+	Meteosat11Satellite.ID: Meteosat11Satellite,
 }

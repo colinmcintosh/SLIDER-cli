@@ -127,8 +127,8 @@ Usage Examples:
 - [x] GOES-16 Satellite
 - [x] GOES-17 Satellite
 - [x] Himawari-8 Satellite
-- [ ] Meteosat-8 Satellite
-- [ ] Meteosat-11 Satellite
+- [x] Meteosat-8 Satellite
+- [x] Meteosat-11 Satellite
 - [ ] JPSS Satellite
 - [x] GOES Complete Sector List
 - [x] Himawari-8 Complete Sector List
