@@ -44,11 +44,21 @@ page to download the latest version. Or you can build the source code with
 
 ## Example Usage
 
+CONUS GeoColor:
+
 ```bash
 ./slider-cli --satellite=goes-16 --sector=conus --product=geocolor -z=2
 ```
 
-![Example Animation](examples/cira-rammb-slider---goes-16---conus---geocolor---20210407140615-20210407154115.gif)
+![Example CONUS Animation](examples/cira-rammb-slider---goes-16---conus---geocolor---20210407140615-20210407154115.gif)
+
+Eruption of the La Soufrière volcano on 2021-04-10:
+
+```bash
+./slider-cli -s=goes-16 -c=ms2 -p=geocolor -i=90 -b=20210410152000 -t=2 --speed=10 --crop=250,250,750,750
+```
+
+![Example MS2 Animation](examples/cira-rammb-slider_goes-16_ms2_geocolor_500x500_20210410151951-20210410181751.gif)
 
 ## Help Dialog
 
