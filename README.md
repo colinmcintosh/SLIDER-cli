@@ -15,9 +15,11 @@ SLIDER is
 the [Satellite Loop Interactive Data Explorer in Real-time](https://www.satelliteconferences.noaa.gov/2017/doc/poster/94.pdf)
 .
 
-This tool is meant to replicate most of the features of SLIDER and includes some
-additional flexibility in configuration options. The goal of this utility is to
-resolve some common issues with the SLIDER web interface, specifically:
+#### Motivation
+
+This tool is meant to replicate most of the features of SLIDER and includes some additional
+flexibility in configuration options. The goal of this utility is to resolve some common issues with
+the SLIDER web interface, specifically:
 
 - Incomplete frames being rendered on screen
 - Slow to generate animations
@@ -51,7 +53,7 @@ page to download the latest version. Or you can build the source code with
 ## Help Dialog
 
 ```
-slider-cli version v0.3.0-2-g96b20c8-96b20c8 (Built 2021-04-09T23:45:32Z)
+slider-cli version v0.4.0-9cc29b1 (Built 2021-04-10T17:34:53Z)
 
 Usage:
       --allow-stale        Allow imagery more than a year old -- filtering these images
@@ -59,6 +61,8 @@ Usage:
       --angle int          Degrees to rotate the animation.
   -b, --begin string       Desired image capture time of the first image in the loop. Use the
                            timestamp format YYYYMMDDhhmmss. This flag cannot be used with --end.
+      --crop ints          List of points in the final image (before rotation) to crop to. Use
+                           the format X1,Y1,X2,Y2 for the rectangle you want to crop to.
       --date-list          Print a list of available dates
       --decode string      Decode a SLIDER URL into a loop config and create an animation. You
                            must supply --time-step as well as that can't be decoded from the URL.
