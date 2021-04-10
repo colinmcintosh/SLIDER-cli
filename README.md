@@ -15,7 +15,7 @@ SLIDER is
 the [Satellite Loop Interactive Data Explorer in Real-time](https://www.satelliteconferences.noaa.gov/2017/doc/poster/94.pdf)
 .
 
-#### Motivation
+### Motivation
 
 This tool is meant to replicate most of the features of SLIDER and includes some additional
 flexibility in configuration options. The goal of this utility is to resolve some common issues with
@@ -108,7 +108,7 @@ Usage Examples:
 - [x] Reverse
 - [x] Speed
 - [x] Zoom (Resolution)
-- [ ] Pan/Crop
+- [x] Pan/Crop
 - [x] Rotation/Angle
 - [ ] Slider
 - [x] Satellite Selection

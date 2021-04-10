@@ -44,6 +44,8 @@ type LoopOptions struct {
 	NumberOfImages int
 	// Angle is the number of degrees to rotate the image.
 	Angle float64
+	// Crop is the area to crop the animation to.
+	Crop *image.Rectangle
 	// Speed is the interval between frames. A higher number increases the delay between frames.
 	Speed int
 	// ZoomLevel is the zoom level to request imagery for. Increasing ZoomLevel increases the output animation
@@ -65,7 +67,7 @@ type LoopOptions struct {
 
 // CreateLoop creates a new loop with the options specified in the provided LoopOptions.
 func CreateLoop(opts *LoopOptions) error {
-	estimateCount := opts.NumberOfImages * opts.TimeStep / 5
+	estimateCount := opts.NumberOfImages * opts.TimeStep * 5
 	latestTimesUnfiltered, err := LatestTimes(opts.Satellite, opts.Sector, opts.Product, estimateCount)
 	if err != nil {
 		return fmt.Errorf("unable to get latest times: %w", err)
@@ -137,6 +139,10 @@ func downloadImages(opts *LoopOptions, selectedTimes []time.Time) ([]image.Image
 			}
 			if opts.Sector.CropRatioX > 0 && opts.Sector.CropRatioY > 0 {
 				canvas = imaging.CropAnchor(canvas, opts.Sector.XSize(opts.zoom), opts.Sector.YSize(opts.zoom), imaging.Center)
+			}
+
+			if opts.Crop != nil {
+				canvas = imaging.Crop(canvas, *opts.Crop)
 			}
 
 			if opts.Angle != 0 {
@@ -274,9 +280,16 @@ func (s timeSortable) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s timeSortable) Len() int           { return len(s) }
 
 func makeFileName(opts *LoopOptions, startTime string, endTime string) string {
+	var x, y int
+	if opts.Crop != nil {
+		x = opts.Crop.Dx()
+		y = opts.Crop.Dx()
+	} else {
+		x = opts.Sector.XSize(opts.zoom)
+		y = opts.Sector.YSize(opts.zoom)
+	}
 	return fmt.Sprintf("cira-rammb-slider_%s_%s_%s_%dx%d_%s-%s",
-		opts.Satellite.ID, opts.Sector.ID, opts.Product.ID, opts.Sector.XSize(opts.zoom), opts.Sector.YSize(opts.zoom),
-		startTime, endTime)
+		opts.Satellite.ID, opts.Sector.ID, opts.Product.ID, x, y, startTime, endTime)
 }
 
 func LoopOptsFromURL(uri string) (*LoopOptions, error) {

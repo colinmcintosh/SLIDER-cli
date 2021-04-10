@@ -22,6 +22,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"image"
 	"os"
 	"os/signal"
 	"runtime"
@@ -57,6 +58,8 @@ func ParseFlags() {
 		"loop. Use the timestamp format YYYYMMDDhhmmss. This flag cannot be used with --begin.")
 	pflag.Int("speed", 15, "Desired frame rate in 100ths of a second. The lowest value accepted is 1.")
 	pflag.Int("angle", 0, "Degrees to rotate the animation.")
+	pflag.IntSlice("crop", []int{}, "List of points in the final image (before rotation) to crop to. "+
+		"Use the format X1,Y1,X2,Y2 for the rectangle you want to crop to.")
 	pflag.StringP("loop", "l", "forward", "Loop style. Options are 'forward', 'reverse', "+
 		"or 'rock'. Note that using 'rock' will nearly double the output animation file size.")
 	pflag.String("decode", "", "Decode a SLIDER URL into a loop config and create an animation. "+
@@ -329,6 +332,18 @@ func handleFlags(config *viper.Viper) {
 		}
 	}
 
+	var cropArea *image.Rectangle
+	if points := config.GetIntSlice("crop"); points != nil && len(points) > 0 {
+		if len(points) != 4 {
+			log.Fatal().Msgf("Must supply exactly 4 points to select crop area. Got %d points: %v",
+				len(points), points)
+		}
+		cropArea = &image.Rectangle{
+			Min: image.Point{X: points[0], Y: points[1]},
+			Max: image.Point{X: points[2], Y: points[3]},
+		}
+	}
+
 	err := slider.CreateLoop(&slider.LoopOptions{
 		Satellite:       satellite,
 		Sector:          sector,
@@ -336,6 +351,7 @@ func handleFlags(config *viper.Viper) {
 		Loop:            loop,
 		NumberOfImages:  config.GetInt("image-count"),
 		Angle:           float64(config.GetInt("angle")),
+		Crop:            cropArea,
 		Speed:           config.GetInt("speed"),
 		ZoomLevel:       config.GetInt("zoom"),
 		TimeStep:        config.GetInt("time-step"),
