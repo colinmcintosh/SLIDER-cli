@@ -134,7 +134,7 @@ Usage Examples:
 - [x] Begin Timestamp
 - [x] End Timestamp
 - [x] Animated GIF
-- [ ] Animated PNG
+- [x] Animated PNG
 - [ ] Separate Images
 - [ ] Follow Feature
 - [x] URL Parsing

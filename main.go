@@ -64,6 +64,8 @@ func ParseFlags() {
 		"or 'rock'. Note that using 'rock' will nearly double the output animation file size.")
 	pflag.String("decode", "", "Decode a SLIDER URL into a loop config and create an animation. "+
 		"You must supply --time-step as well as that can't be decoded from the URL.")
+	pflag.StringP("format", "f", "gif", "Output animation file format. Options are \"gif\" or"+
+		" \"png\".")
 
 	pflag.Bool("help", false, "Print help dialog.")
 	pflag.Bool("help-wrapped", false, "Print help dialog with text wrapped.")
@@ -344,6 +346,17 @@ func handleFlags(config *viper.Viper) {
 		}
 	}
 
+	var fileFormat slider.FileFormat
+	switch config.GetString("format") {
+	case "gif", "GIF":
+		fileFormat = slider.GIF
+	case "png", "PNG":
+		fileFormat = slider.PNG
+	default:
+		log.Fatal().Msgf("File format '%s' is not valid. Options are 'gif' and 'png'.",
+			config.GetString("format"))
+	}
+
 	err := slider.CreateLoop(&slider.LoopOptions{
 		Satellite:       satellite,
 		Sector:          sector,
@@ -358,6 +371,7 @@ func handleFlags(config *viper.Viper) {
 		BeginTime:       beginTime,
 		EndTime:         endTime,
 		OutputDirectory: config.GetString("dir"),
+		FileFormat:      fileFormat,
 	})
 	if err != nil {
 		log.Fatal().Msgf("unable to create loop: %v", err)

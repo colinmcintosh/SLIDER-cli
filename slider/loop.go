@@ -62,8 +62,17 @@ type LoopOptions struct {
 	// AllowStaleImages allows imagery that is over one year old to be included in animations. Disallowing this old
 	// imagery by default helps to prevent old images from being accidentally included in loops.
 	AllowStaleImages bool
-	zoom             *Zoom
+	// FileFormat is the output file format of the animation.
+	FileFormat FileFormat
+	zoom       *Zoom
 }
+
+type FileFormat int
+
+const (
+	GIF FileFormat = iota
+	PNG
+)
 
 // CreateLoop creates a new loop with the options specified in the provided LoopOptions.
 func CreateLoop(opts *LoopOptions) error {
@@ -97,13 +106,30 @@ func CreateLoop(opts *LoopOptions) error {
 	}
 
 	// Animate
-	animation, err := AnimateGIF(images, opts.Speed, opts.Loop)
 	firstTimestamp := selectedTimes[0].Format("20060102150405")
 	lastTimestamp := selectedTimes[len(selectedTimes)-1].Format("20060102150405")
 	outPath := path.Join(opts.OutputDirectory, makeFileName(opts, firstTimestamp, lastTimestamp))
-	_, err = SaveGIF(outPath, animation)
-	if err != nil {
-		return fmt.Errorf("unable to save animation: %w", err)
+	switch opts.FileFormat {
+	case GIF:
+		animation, err := AnimateGIF(images, opts.Speed, opts.Loop)
+		if err != nil {
+			return fmt.Errorf("unable to create animation: %w", err)
+		}
+		_, err = SaveGIF(outPath, animation)
+		if err != nil {
+			return fmt.Errorf("unable to save animation: %w", err)
+		}
+	case PNG:
+		animation, err := AnimatePNG(images, opts.Speed, opts.Loop)
+		if err != nil {
+			return fmt.Errorf("unable to create animation: %w", err)
+		}
+		_, err = SavePNG(outPath, animation)
+		if err != nil {
+			return fmt.Errorf("unable to save animation: %w", err)
+		}
+	default:
+		return fmt.Errorf("unrecognized output file format %v", opts.FileFormat)
 	}
 	return nil
 }
