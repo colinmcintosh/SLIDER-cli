@@ -86,4 +86,5 @@ var Satellites = map[string]*Satellite{
 	Himawari8Satellite.ID:  Himawari8Satellite,
 	Meteosat8Satellite.ID:  Meteosat8Satellite,
 	Meteosat11Satellite.ID: Meteosat11Satellite,
+	JPSSSatellite.ID:       JPSSSatellite,
 }

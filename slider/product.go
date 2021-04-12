@@ -93,6 +93,15 @@ var CIRASnowCloudLayersProduct = &Product{
 	ZoomAdjust:   1,
 }
 
+// CIRA NUCAPS Cold Air Aloft Product
+var CIRANUCAPSColdAirAloftProduct = &Product{
+	ID:           "cold-air-aloft",
+	FriendlyName: "NUCAPS Cold Air Aloft",
+	Description:  "CIRA",
+	Value:        "cira_nucaps_cold_air_aloft",
+	ZoomAdjust:   2,
+}
+
 // Split Window Difference Product
 var SplitWindowDifferenceProduct = &Product{
 	ID:           "split-window-difference",
