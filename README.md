@@ -143,11 +143,11 @@ Usage Examples:
 - [x] Himawari-8 Satellite
 - [x] Meteosat-8 Satellite
 - [x] Meteosat-11 Satellite
-- [ ] JPSS Satellite
+- [x] JPSS Satellite
 - [x] GOES Complete Sector List
 - [x] Himawari-8 Complete Sector List
 - [ ] Meteosat Complete Sector List
-- [ ] JPSS Complete Sector List
+- [x] JPSS Complete Sector List
 - [ ] GOES Complete Product List
 - [ ] Himawari-8 Complete Product List
 - [ ] Meteosat Complete Product List
