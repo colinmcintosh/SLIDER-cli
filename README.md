@@ -1,7 +1,7 @@
 # RAMMB/CIRA SLIDER CLI
 
 [![License](https://img.shields.io/github/license/colinmcintosh/SLIDER-cli.svg)](https://github.com/colinmcintosh/SLIDER-cli/blob/main/LICENSE)
-[![GoDoc](https://godoc.org/github.com/colinmcintosh/SLIDER-cli/slider?status.svg)](https://godoc.org/github.com/colinmcintosh/SLIDER-cli/slider)
+[![Go Reference](https://pkg.go.dev/badge/github.com/colinmcintosh/slider-cli/slider.svg)](https://pkg.go.dev/github.com/colinmcintosh/slider-cli/slider)
 [![Testing](https://github.com/colinmcintosh/SLIDER-cli/actions/workflows/build-main.yml/badge.svg?branch=main)](https://github.com/colinmcintosh/SLIDER-cli/actions/workflows/build-main.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/colinmcintosh/SLIDER-cli)](https://goreportcard.com/report/github.com/colinmcintosh/SLIDER-cli)
 [![Release](https://img.shields.io/github/release/colinmcintosh/SLIDER-cli.svg)](https://github.com/colinmcintosh/SLIDER-cli/releases/latest)
@@ -21,18 +21,19 @@ This tool is meant to replicate most of the features of SLIDER and includes some
 flexibility in configuration options. The goal of this utility is to resolve some common issues with
 the SLIDER web interface, specifically:
 
-- Incomplete frames being rendered on screen
+- Missing tiles / tiles not being rendered on screen
 - Slow to generate animations
 - Web browser may crash for complex animations
 - Limited options for features like time-step and speed
 
-This is not to downplay the awesomeness that is the SLIDER web UI. The folks who
-created it did amazing work and this CLI tool hopes to be complementary to that
+This is not to downplay the awesomeness that is the SLIDER web UI. The folks who created it (
+specifically Kevin Micke) did amazing work and this CLI tool hopes to be complementary to that
 effort. For more details on their effort check out this
 2018 [talk from AMS](https://ams.confex.com/ams/98Annual/webprogram/Paper336810.html)
 on SLIDER.
 
-This is not an official product of NWS, NOAA, RAMMB, or CIRA.
+This is not an official product of NWS, NOAA, RAMMB, or CIRA. This is not officially related to the
+SLIDER product.
 
 ## Download
 
@@ -157,6 +158,7 @@ Usage Examples:
 - [ ] Meteosat Complete Product List
 - [ ] JPSS Complete Product List
 - [ ] Local Image Caching
+- [ ] Import products from `define-products.js` (requires some investigation)
 
 ### Known Issues
 
