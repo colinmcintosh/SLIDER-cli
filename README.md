@@ -60,10 +60,12 @@ Eruption of the La Soufrière volcano on 2021-04-10:
 
 ![Example MS2 Animation](examples/cira-rammb-slider_goes-16_ms2_geocolor_500x500_20210410151951-20210410181751.gif)
 
+See the [examples/](examples) folder for more commands and example images, such as animated PNGs.
+
 ## Help Dialog
 
 ```
-slider-cli version v0.4.0-9cc29b1 (Built 2021-04-10T17:34:53Z)
+slider-cli version v0.4.0-10-ge93cfe1-e93cfe1 (Built 2021-04-12T02:23:56Z)
 
 Usage:
       --allow-stale        Allow imagery more than a year old -- filtering these images
@@ -79,6 +81,8 @@ Usage:
   -d, --dir string         Output filename to save rendered animation in. (default ".")
   -e, --end string         Desired image capture time of the last image in the loop. Use the
                            timestamp format YYYYMMDDhhmmss. This flag cannot be used with --begin.
+  -f, --format string      Output animation file format. Options are "gif" or "png". (default
+                           "gif")
       --help               Print help dialog.
   -i, --image-count int    Number of images in the loop. (default 6)
   -l, --loop string        Loop style. Options are 'forward', 'reverse', or 'rock'. Note that
