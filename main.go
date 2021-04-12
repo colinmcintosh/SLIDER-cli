@@ -75,6 +75,8 @@ func ParseFlags() {
 	_ = pflag.CommandLine.MarkHidden("help-wrapped")
 	pflag.BoolP("verbose", "v", false, "Enable verbose output.")
 	pflag.BoolP("version", "V", false, "Print version and exit.")
+	pflag.String("cache", "", "Directory to cache downloaded images in. Caching will not be used if "+
+		"a cache directory is not provided.")
 	pflag.StringP("dir", "d", ".", "Output filename to save rendered animation in.")
 	pflag.StringP("output", "o", "", "Output filename to save rendered animation in. "+
 		"(default auto-generated)")
@@ -372,6 +374,7 @@ func handleFlags(config *viper.Viper) {
 		TimeStep:        config.GetInt("time-step"),
 		BeginTime:       beginTime,
 		EndTime:         endTime,
+		CacheDirectory:  config.GetString("cache"),
 		OutputDirectory: config.GetString("dir"),
 		FileFormat:      fileFormat,
 	})

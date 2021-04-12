@@ -57,6 +57,9 @@ type LoopOptions struct {
 	BeginTime time.Time
 	// EndTime is the desired capture time of the last image in the loop.
 	EndTime time.Time
+	// CacheDirectory is the directory to cache downloaded images in. Caching will only happen if a directory is
+	// supplied here.
+	CacheDirectory string
 	// OutputDirectory is the directory to save output animations in.
 	OutputDirectory string
 	// AllowStaleImages allows imagery that is over one year old to be included in animations. Disallowing this old
@@ -99,10 +102,10 @@ func CreateLoop(opts *LoopOptions) error {
 
 	opts.zoom = opts.Satellite.ZoomLevels[opts.ZoomLevel]
 
-	// Download Images
-	images, err := downloadImages(opts, selectedTimes)
+	// Get/Download Images
+	images, err := getImages(opts, selectedTimes)
 	if err != nil {
-		return fmt.Errorf("unable to download images: %w", err)
+		return fmt.Errorf("unable to get images: %w", err)
 	}
 
 	// Animate
@@ -134,7 +137,7 @@ func CreateLoop(opts *LoopOptions) error {
 	return nil
 }
 
-func downloadImages(opts *LoopOptions, selectedTimes []time.Time) ([]image.Image, error) {
+func getImages(opts *LoopOptions, selectedTimes []time.Time) ([]image.Image, error) {
 	timeIn := time.Now()
 	images := make([]image.Image, len(selectedTimes))
 	lock := sync.Mutex{}
@@ -143,24 +146,35 @@ func downloadImages(opts *LoopOptions, selectedTimes []time.Time) ([]image.Image
 	for i, timestamp := range selectedTimes {
 		wg.Add(1)
 		go func(timestamp time.Time, i int) {
-			//log.Debug().Msgf("Building canvas %dx%d", zoom.CellSizeX*zoom.XCells, zoom.CellSizeY*zoom.YCells)
 			canvas := imaging.New(opts.Sector.CellSize*opts.zoom.NumCells(), opts.Sector.CellSize*opts.zoom.NumCells(), color.NRGBA{})
 			for x := 0; x < opts.zoom.NumCells(); x++ {
 				for y := 0; y < opts.zoom.NumCells(); y++ {
-					cell, err := DownloadImage(&ImageRequest{
-						Date:             timestamp.Format("20060102"),
-						Satellite:        opts.Satellite.Value,
-						Sector:           opts.Sector.Value,
-						Product:          opts.Product.Value,
-						ImageTimestamp:   timestamp.Format("20060102150405"),
-						ZoomLevel:        opts.ZoomLevel,
-						SectionXPosition: x,
-						SectionYPosition: y,
+					imageTileURL := ImageTileURL(&TileImageRequest{
+						Date:           timestamp.Format("20060102"),
+						Satellite:      opts.Satellite.Value,
+						Sector:         opts.Sector.Value,
+						Product:        opts.Product.Value,
+						ImageTimestamp: timestamp.Format("20060102150405"),
+						ZoomLevel:      opts.ZoomLevel,
+						TileXPosition:  x,
+						TileYPosition:  y,
 					})
-					if err != nil {
-						errChan <- fmt.Errorf("unable to download image for timestamp %v: %w", timestamp, err)
+					var tile image.Image
+					var err error
+					if opts.CacheDirectory != "" {
+						tile, err = cachedImageDownload(opts, imageTileURL)
+						if err != nil {
+							errChan <- fmt.Errorf("unable to get image for timestamp %v: %w", timestamp, err)
+							return
+						}
+					} else {
+						tile, err = DownloadImage(imageTileURL)
+						if err != nil {
+							errChan <- fmt.Errorf("unable to download image for timestamp %v: %w", timestamp, err)
+							return
+						}
 					}
-					canvas = imaging.Paste(canvas, cell, image.Pt(x*opts.Sector.CellSize, y*opts.Sector.CellSize))
+					canvas = imaging.Paste(canvas, tile, image.Pt(x*opts.Sector.CellSize, y*opts.Sector.CellSize))
 				}
 			}
 			if opts.Sector.CropRatioX > 0 && opts.Sector.CropRatioY > 0 {
@@ -197,6 +211,31 @@ func downloadImages(opts *LoopOptions, selectedTimes []time.Time) ([]image.Image
 	timeOut := time.Now()
 	log.Debug().Msgf("Download took %.3fs", timeOut.Sub(timeIn).Seconds())
 	return images, nil
+}
+
+func cachedImageDownload(opts *LoopOptions, url string) (image.Image, error) {
+	c := ImageCache{Dir: opts.CacheDirectory}
+	filePath, err := URLToFilePath(url)
+	if err != nil {
+		return nil, fmt.Errorf("unable to convert URL to file path: %s: %w", url, err)
+	}
+	img, err := c.Get(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read image cache: %w", err)
+	}
+	if img == nil {
+		img, err = DownloadImage(url)
+		if err != nil {
+			return nil, fmt.Errorf("unable to download image: %s: %w", url, err)
+		}
+		err = c.Write(filePath, img)
+		if err != nil {
+			return nil, fmt.Errorf("unable to write image to cache: %s: %w", filePath, err)
+		}
+	} else {
+		log.Debug().Msgf("Using cached image: %s", url)
+	}
+	return img, nil
 }
 
 // SelectTimestamps selects the desired timestamps from the list of int timestamps returned by SLIDER. Timestamps
