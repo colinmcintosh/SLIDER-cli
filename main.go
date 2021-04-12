@@ -32,7 +32,10 @@ import (
 	"time"
 )
 
+// Version is the built version and is set during build time by GOLDFLAGS.
 var Version = "develop"
+
+// BuildTime is the build timestamp and is set during build time by GOLDFLAGS.
 var BuildTime = "develop"
 
 func ParseFlags() {
@@ -153,14 +156,14 @@ func main() {
 		os.Exit(0)
 	}
 	if config.GetBool("version") {
-		fmt.Println(fmt.Sprintf("slider-cli version %s (Built %s)",
-			Version, BuildTime))
+		fmt.Printf("slider-cli version %s (Built %s)\n", Version, BuildTime)
 		os.Exit(0)
 	}
 
 	handleFlags(config)
 }
 
+//gocyclo:ignore
 func handleFlags(config *viper.Viper) {
 	if config.GetString("decode") != "" {
 		opts, err := slider.LoopOptsFromURL(config.GetString("decode"))
@@ -186,7 +189,7 @@ func handleFlags(config *viper.Viper) {
 		sort.Strings(keys)
 		for _, k := range keys {
 			satellite := slider.Satellites[k]
-			fmt.Println(fmt.Sprintf("%20s = %s (%s)", satellite.ID, satellite.FriendlyName, satellite.Description))
+			fmt.Printf("%20s = %s (%s)\n", satellite.ID, satellite.FriendlyName, satellite.Description)
 		}
 		os.Exit(0)
 	}
@@ -210,10 +213,10 @@ func handleFlags(config *viper.Viper) {
 			keys = append(keys, k)
 		}
 		sort.Strings(keys)
-		fmt.Println(fmt.Sprintf("Available Sectors on Satellite %s", satellite.FriendlyName))
+		fmt.Printf("Available Sectors on Satellite %s\n", satellite.FriendlyName)
 		for _, k := range keys {
 			sector := satellite.Sectors[k]
-			fmt.Println(fmt.Sprintf("%20s = %s", sector.ID, sector.FriendlyName))
+			fmt.Printf("%20s = %s\n", sector.ID, sector.FriendlyName)
 		}
 		os.Exit(0)
 	}
@@ -236,13 +239,12 @@ func handleFlags(config *viper.Viper) {
 			log.Fatal().Msg("You must set --satellite and --sector first to list available zoom levels.")
 			os.Exit(1)
 		}
-		fmt.Println(fmt.Sprintf("Zoom Levels for Sector %s on Satellite %s",
-			sector.FriendlyName, satellite.FriendlyName))
+		fmt.Printf("Zoom Levels for Sector %s on Satellite %s", sector.FriendlyName, satellite.FriendlyName)
 		for _, zoom := range satellite.ZoomLevels {
 			if zoom.Level > sector.MaxZoomLevel {
 				continue
 			}
-			fmt.Println(fmt.Sprintf("%5d = %dpx x %dpx", zoom.Level, sector.XSize(zoom), sector.YSize(zoom)))
+			fmt.Printf("%5d = %dpx x %dpx", zoom.Level, sector.XSize(zoom), sector.YSize(zoom))
 		}
 		os.Exit(0)
 	}
@@ -258,15 +260,15 @@ func handleFlags(config *viper.Viper) {
 		}
 		sort.Strings(keys)
 
-		fmt.Println(fmt.Sprintf("Available Products for Sector %s on Satellite %s",
-			sector.FriendlyName, satellite.FriendlyName))
+		fmt.Printf("Available Products for Sector %s on Satellite %s",
+			sector.FriendlyName, satellite.FriendlyName)
 
 		for _, k := range keys {
 			product := satellite.Products[k]
 			if sector.ProductMissing(product) {
 				continue
 			}
-			fmt.Println(fmt.Sprintf("%30s = %s (%s)", product.ID, product.FriendlyName, product.Description))
+			fmt.Printf("%30s = %s (%s)", product.ID, product.FriendlyName, product.Description)
 		}
 		os.Exit(0)
 	}
@@ -335,7 +337,7 @@ func handleFlags(config *viper.Viper) {
 	}
 
 	var cropArea *image.Rectangle
-	if points := config.GetIntSlice("crop"); points != nil && len(points) > 0 {
+	if points := config.GetIntSlice("crop"); len(points) > 0 {
 		if len(points) != 4 {
 			log.Fatal().Msgf("Must supply exactly 4 points to select crop area. Got %d points: %v",
 				len(points), points)

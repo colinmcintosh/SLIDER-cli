@@ -218,7 +218,7 @@ func SelectTimestamps(times []int, opts *LoopOptions) ([]time.Time, error) {
 }
 
 func beginSearch(times []int, opts *LoopOptions) (timeSortable, error) {
-	sort.Sort(sort.IntSlice(times)) // timestamps are sorted in chronological order
+	sort.Ints(times) // timestamps are sorted in chronological order
 	var selectedTimes timeSortable
 	var count = 0
 	var target = opts.BeginTime

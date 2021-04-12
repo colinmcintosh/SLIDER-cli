@@ -18,6 +18,11 @@ clean:
 godoc:
 	godoc -http=":6060"
 
+lint:
+	# Be sure to update the .yml files in .github/workflows if you update these arguments!
+	gofmt -w .
+	golangci-lint run --disable-all -E deadcode,errcheck,gocyclo,gofmt,golint,gosimple,govet,ineffassign,misspell,staticcheck,structcheck,typecheck,unused,varcheck
+
 release:
 	mkdir -p release
 	rm -f release/slider-cli release/slider-cli.exe

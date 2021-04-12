@@ -31,7 +31,7 @@ type Product struct {
 
 // Below are common products not specific to any single satellite system.
 
-// CIRA GeoColor Product
+// CIRAGeoColorProduct is the CIRA GeoColor Product
 var CIRAGeoColorProduct = &Product{
 	ID:           "geocolor",
 	FriendlyName: "GeoColor",
@@ -40,7 +40,7 @@ var CIRAGeoColorProduct = &Product{
 	ZoomAdjust:   1,
 }
 
-// CIRA Proxy Visible Product
+// CIRAProxyVisibleProduct is the CIRA Proxy Visible Product
 var CIRAProxyVisibleProduct = &Product{
 	ID:           "proxy-visible",
 	FriendlyName: "Proxy Visible",
@@ -48,7 +48,7 @@ var CIRAProxyVisibleProduct = &Product{
 	Value:        "cira_proxy_visible",
 }
 
-// CIRA Shortwave Albedo Product
+// CIRAShortwaveAlbedoProduct is the CIRA Shortwave Albedo Product
 var CIRAShortwaveAlbedoProduct = &Product{
 	ID:           "shortwave-albedo",
 	FriendlyName: "Shortwave Albedo",
@@ -57,7 +57,7 @@ var CIRAShortwaveAlbedoProduct = &Product{
 	ZoomAdjust:   2,
 }
 
-// CIRA Dust DEBRA Product
+// CIRADustDEBRAProduct is the CIRA Dust DEBRA Product
 var CIRADustDEBRAProduct = &Product{
 	ID:           "debra",
 	FriendlyName: "Dust - DEBRA",
@@ -66,7 +66,7 @@ var CIRADustDEBRAProduct = &Product{
 	ZoomAdjust:   2,
 }
 
-// CIRA Visible Albedo Product
+// CIRAVisibleAlbedoProduct is the CIRA Visible Albedo Product
 var CIRAVisibleAlbedoProduct = &Product{
 	ID:           "visible-albedo",
 	FriendlyName: "Visible Albedo",
@@ -75,7 +75,7 @@ var CIRAVisibleAlbedoProduct = &Product{
 	ZoomAdjust:   2,
 }
 
-// CIRA Snow/Cloud Product
+// CIRASnowCloudProduct is the CIRA Snow/Cloud Product
 var CIRASnowCloudProduct = &Product{
 	ID:           "snow-cloud",
 	FriendlyName: "Snow/Cloud",
@@ -84,7 +84,7 @@ var CIRASnowCloudProduct = &Product{
 	ZoomAdjust:   1,
 }
 
-// CIRA Snow/Cloud-Layers Product
+// CIRASnowCloudLayersProduct is the CIRA Snow/Cloud-Layers Product
 var CIRASnowCloudLayersProduct = &Product{
 	ID:           "snow-cloud-layers",
 	FriendlyName: "Snow/Cloud-Layers",
@@ -93,7 +93,7 @@ var CIRASnowCloudLayersProduct = &Product{
 	ZoomAdjust:   1,
 }
 
-// CIRA NUCAPS Cold Air Aloft Product
+// CIRANUCAPSColdAirAloftProduct is the CIRA NUCAPS Cold Air Aloft Product
 var CIRANUCAPSColdAirAloftProduct = &Product{
 	ID:           "cold-air-aloft",
 	FriendlyName: "NUCAPS Cold Air Aloft",
@@ -102,7 +102,7 @@ var CIRANUCAPSColdAirAloftProduct = &Product{
 	ZoomAdjust:   2,
 }
 
-// Split Window Difference Product
+// SplitWindowDifferenceProduct is the Split Window Difference Product
 var SplitWindowDifferenceProduct = &Product{
 	ID:           "split-window-difference",
 	FriendlyName: "Split Window Difference",

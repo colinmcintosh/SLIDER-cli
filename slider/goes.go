@@ -15,7 +15,7 @@
 
 package slider
 
-// GOES-16 Satellite
+// GOES16Satellite is the GOES-16 Satellite
 var GOES16Satellite = &Satellite{
 	ID:           "goes-16",
 	FriendlyName: "GOES-16",
@@ -55,7 +55,7 @@ var GOES16Satellite = &Satellite{
 	ZoomLevels: GOESHimawariZoomLevels,
 }
 
-// GOES-17 Satellite
+// GOES17Satellite is the GOES-17 Satellite
 var GOES17Satellite = &Satellite{
 	ID:           "goes-17",
 	FriendlyName: "GOES-17",
@@ -95,7 +95,7 @@ var GOES17Satellite = &Satellite{
 	ZoomLevels: GOESHimawariZoomLevels,
 }
 
-// GOES CONUS Sector
+// GOESCONUSSector is the GOES CONUS Sector
 var GOESCONUSSector = &Sector{
 	ID:              "conus",
 	FriendlyName:    "CONUS",
@@ -107,7 +107,7 @@ var GOESCONUSSector = &Sector{
 	MissingProducts: []*Product{},
 }
 
-// GOES Full Disk Sector
+// GOESFullDiskSector is the GOES Full Disk Sector
 var GOESFullDiskSector = &Sector{
 	ID:              "fd",
 	FriendlyName:    "Full Disk",
@@ -117,7 +117,7 @@ var GOESFullDiskSector = &Sector{
 	MissingProducts: []*Product{},
 }
 
-// GOES Mesoscale 1 Sector
+// GOESMesoscale1Sector is the GOES Mesoscale 1 Sector
 var GOESMesoscale1Sector = &Sector{
 	ID:              "ms1",
 	FriendlyName:    "Mesoscale 1",
@@ -127,7 +127,7 @@ var GOESMesoscale1Sector = &Sector{
 	MissingProducts: []*Product{},
 }
 
-// GOES Mesoscale 2 Sector
+// GOESMesoscale2Sector is the GOES Mesoscale 2 Sector
 var GOESMesoscale2Sector = &Sector{
 	ID:              "ms2",
 	FriendlyName:    "Mesoscale 2",
@@ -137,7 +137,7 @@ var GOESMesoscale2Sector = &Sector{
 	MissingProducts: []*Product{},
 }
 
-// GOES Band 1 Product
+// GOESBand1Product is the GOES Band 1 Product
 var GOESBand1Product = &Product{
 	ID:           "band-1",
 	FriendlyName: "Band 1",
@@ -146,7 +146,7 @@ var GOESBand1Product = &Product{
 	ZoomAdjust:   1,
 }
 
-// GOES Band 2 Product
+// GOESBand2Product is the GOES Band 2 Product
 var GOESBand2Product = &Product{
 	ID:           "band-2",
 	FriendlyName: "Band 2",
@@ -154,7 +154,7 @@ var GOESBand2Product = &Product{
 	Value:        "band_02",
 }
 
-// GOES Band 3 Product
+// GOESBand3Product is the GOES Band 3 Product
 var GOESBand3Product = &Product{
 	ID:           "band-3",
 	FriendlyName: "Band 3",
@@ -163,7 +163,7 @@ var GOESBand3Product = &Product{
 	ZoomAdjust:   1,
 }
 
-// GOES Band 4 Product
+// GOESBand4Product is the GOES Band 4 Product
 var GOESBand4Product = &Product{
 	ID:           "band-4",
 	FriendlyName: "Band 4",
@@ -172,7 +172,7 @@ var GOESBand4Product = &Product{
 	ZoomAdjust:   2,
 }
 
-// GOES Band 5 Product
+// GOESBand5Product is the GOES Band 5 Product
 var GOESBand5Product = &Product{
 	ID:           "band-5",
 	FriendlyName: "Band 5",
@@ -181,7 +181,7 @@ var GOESBand5Product = &Product{
 	ZoomAdjust:   1,
 }
 
-// GOES Band 6 Product
+// GOESBand6Product is the GOES Band 6 Product
 var GOESBand6Product = &Product{
 	ID:           "band-6",
 	FriendlyName: "Band 6",
@@ -190,7 +190,7 @@ var GOESBand6Product = &Product{
 	ZoomAdjust:   2,
 }
 
-// GOES Band 7 Product
+// GOESBand7Product is the GOES Band 7 Product
 var GOESBand7Product = &Product{
 	ID:           "band-7",
 	FriendlyName: "Band 7",
@@ -199,7 +199,7 @@ var GOESBand7Product = &Product{
 	ZoomAdjust:   2,
 }
 
-// GOES Band 8 Product
+// GOESBand8Product is the GOES Band 8 Product
 var GOESBand8Product = &Product{
 	ID:           "band-8",
 	FriendlyName: "Band 8",
@@ -208,7 +208,7 @@ var GOESBand8Product = &Product{
 	ZoomAdjust:   2,
 }
 
-// GOES Band 9 Product
+// GOESBand9Product is the GOES Band 9 Product
 var GOESBand9Product = &Product{
 	ID:           "band-9",
 	FriendlyName: "Band 9",
@@ -217,7 +217,7 @@ var GOESBand9Product = &Product{
 	ZoomAdjust:   2,
 }
 
-// GOES Band 10 Product
+// GOESBand10Product is the GOES Band 10 Product
 var GOESBand10Product = &Product{
 	ID:           "band-10",
 	FriendlyName: "Band 10",
@@ -226,7 +226,7 @@ var GOESBand10Product = &Product{
 	ZoomAdjust:   2,
 }
 
-// GOES Band 11 Product
+// GOESBand11Product is the GOES Band 11 Product
 var GOESBand11Product = &Product{
 	ID:           "band-11",
 	FriendlyName: "Band 11",
@@ -235,7 +235,7 @@ var GOESBand11Product = &Product{
 	ZoomAdjust:   2,
 }
 
-// GOES Band 12 Product
+// GOESBand12Product is the GOES Band 12 Product
 var GOESBand12Product = &Product{
 	ID:           "band-12",
 	FriendlyName: "Band 12",
@@ -244,7 +244,7 @@ var GOESBand12Product = &Product{
 	ZoomAdjust:   2,
 }
 
-// GOES Band 13 Product
+// GOESBand13Product is the GOES Band 13 Product
 var GOESBand13Product = &Product{
 	ID:           "band-13",
 	FriendlyName: "Band 13",
@@ -253,7 +253,7 @@ var GOESBand13Product = &Product{
 	ZoomAdjust:   2,
 }
 
-// GOES Band 14 Product
+// GOESBand14Product is the GOES Band 14 Product
 var GOESBand14Product = &Product{
 	ID:           "band-14",
 	FriendlyName: "Band 14",
@@ -262,7 +262,7 @@ var GOESBand14Product = &Product{
 	ZoomAdjust:   2,
 }
 
-// GOES Band 15 Product
+// GOESBand15Product is the GOES Band 15 Product
 var GOESBand15Product = &Product{
 	ID:           "band-15",
 	FriendlyName: "Band 15",
@@ -271,7 +271,7 @@ var GOESBand15Product = &Product{
 	ZoomAdjust:   2,
 }
 
-// GOES Band 16 Product
+// GOESBand16Product is the GOES Band 16 Product
 var GOESBand16Product = &Product{
 	ID:           "band-16",
 	FriendlyName: "Band 16",
