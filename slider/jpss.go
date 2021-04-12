@@ -15,7 +15,7 @@
 
 package slider
 
-// JPSS Satellite
+// JPSSSatellite is the JPSS Satellite
 var JPSSSatellite = &Satellite{
 	ID:           "jpss",
 	FriendlyName: "JPSS",
@@ -88,7 +88,7 @@ var JPSSZoomLevels = []*Zoom{
 	},
 }
 
-// JPSS Northern Hemisphere Sector
+// JPSSNorthernHemisphereSector is the JPSS Northern Hemisphere Sector
 var JPSSNorthernHemisphereSector = &Sector{
 	ID:           "north",
 	FriendlyName: "Northern Hemisphere",
@@ -97,7 +97,7 @@ var JPSSNorthernHemisphereSector = &Sector{
 	MaxZoomLevel: 5,
 }
 
-// JPSS Southern Hemisphere Sector
+// JPSSSouthernHemisphereSector is the JPSS Southern Hemisphere Sector
 var JPSSSouthernHemisphereSector = &Sector{
 	ID:           "south",
 	FriendlyName: "Southern Hemisphere",
@@ -109,7 +109,7 @@ var JPSSSouthernHemisphereSector = &Sector{
 	},
 }
 
-// JPSS Day/Night Band Product
+// JPSSDayNightProduct is the JPSS Day/Night Band Product
 var JPSSDayNightProduct = &Product{
 	ID:           "day-night",
 	FriendlyName: "Day/Night Band",
@@ -118,7 +118,7 @@ var JPSSDayNightProduct = &Product{
 	ZoomAdjust:   1,
 }
 
-// JPSS Band M1 Product
+// JPSSBandM1Product is the JPSS Band M1 Product
 var JPSSBandM1Product = &Product{
 	ID:           "band-m1",
 	FriendlyName: "Band M1",
@@ -127,7 +127,7 @@ var JPSSBandM1Product = &Product{
 	ZoomAdjust:   1,
 }
 
-// JPSS Band M2 Product
+// JPSSBandM2Product is the JPSS Band M2 Product
 var JPSSBandM2Product = &Product{
 	ID:           "band-m2",
 	FriendlyName: "Band M2",
@@ -136,7 +136,7 @@ var JPSSBandM2Product = &Product{
 	ZoomAdjust:   1,
 }
 
-// JPSS Band M3 Product
+// JPSSBandM3Product is the JPSS Band M3 Product
 var JPSSBandM3Product = &Product{
 	ID:           "band-m3",
 	FriendlyName: "Band M3",
@@ -145,7 +145,7 @@ var JPSSBandM3Product = &Product{
 	ZoomAdjust:   1,
 }
 
-// JPSS Band M4 Product
+// JPSSBandM4Product is the JPSS Band M4 Product
 var JPSSBandM4Product = &Product{
 	ID:           "band-m4",
 	FriendlyName: "Band M4",
@@ -154,7 +154,7 @@ var JPSSBandM4Product = &Product{
 	ZoomAdjust:   1,
 }
 
-// JPSS Band M5 Product
+// JPSSBandM5Product is the JPSS Band M5 Product
 var JPSSBandM5Product = &Product{
 	ID:           "band-m5",
 	FriendlyName: "Band M5",
@@ -163,7 +163,7 @@ var JPSSBandM5Product = &Product{
 	ZoomAdjust:   1,
 }
 
-// JPSS Band M6 Product
+// JPSSBandM6Product is the JPSS Band M6 Product
 var JPSSBandM6Product = &Product{
 	ID:           "band-m6",
 	FriendlyName: "Band M6",
@@ -172,7 +172,7 @@ var JPSSBandM6Product = &Product{
 	ZoomAdjust:   1,
 }
 
-// JPSS Band M7 Product
+// JPSSBandM7Product is the JPSS Band M7 Product
 var JPSSBandM7Product = &Product{
 	ID:           "band-m7",
 	FriendlyName: "Band M7",
@@ -181,7 +181,7 @@ var JPSSBandM7Product = &Product{
 	ZoomAdjust:   1,
 }
 
-// JPSS Band M8 Product
+// JPSSBandM8Product is the JPSS Band M8 Product
 var JPSSBandM8Product = &Product{
 	ID:           "band-m8",
 	FriendlyName: "Band M8",
@@ -190,7 +190,7 @@ var JPSSBandM8Product = &Product{
 	ZoomAdjust:   1,
 }
 
-// JPSS Band M9 Product
+// JPSSBandM9Product is the JPSS Band M9 Product
 var JPSSBandM9Product = &Product{
 	ID:           "band-m9",
 	FriendlyName: "Band M9",
@@ -199,7 +199,7 @@ var JPSSBandM9Product = &Product{
 	ZoomAdjust:   1,
 }
 
-// JPSS Band M10 Product
+// JPSSBandM10Product is the JPSS Band M10 Product
 var JPSSBandM10Product = &Product{
 	ID:           "band-m10",
 	FriendlyName: "Band M10",
@@ -208,7 +208,7 @@ var JPSSBandM10Product = &Product{
 	ZoomAdjust:   1,
 }
 
-// JPSS Band M11 Product
+// JPSSBandM11Product is the JPSS Band M11 Product
 var JPSSBandM11Product = &Product{
 	ID:           "band-m11",
 	FriendlyName: "Band M11",
@@ -217,7 +217,7 @@ var JPSSBandM11Product = &Product{
 	ZoomAdjust:   1,
 }
 
-// JPSS Band M12 Product
+// JPSSBandM12Product is the JPSS Band M12 Product
 var JPSSBandM12Product = &Product{
 	ID:           "band-m12",
 	FriendlyName: "Band M12",
@@ -226,7 +226,7 @@ var JPSSBandM12Product = &Product{
 	ZoomAdjust:   1,
 }
 
-// JPSS Band M13 Product
+// JPSSBandM13Product is the JPSS Band M13 Product
 var JPSSBandM13Product = &Product{
 	ID:           "band-m13",
 	FriendlyName: "Band M13",
@@ -235,7 +235,7 @@ var JPSSBandM13Product = &Product{
 	ZoomAdjust:   1,
 }
 
-// JPSS Band M14 Product
+// JPSSBandM14Product is the JPSS Band M14 Product
 var JPSSBandM14Product = &Product{
 	ID:           "band-m14",
 	FriendlyName: "Band M14",
@@ -244,7 +244,7 @@ var JPSSBandM14Product = &Product{
 	ZoomAdjust:   1,
 }
 
-// JPSS Band M15 Product
+// JPSSBandM15Product is the JPSS Band M15 Product
 var JPSSBandM15Product = &Product{
 	ID:           "band-m15",
 	FriendlyName: "Band M15",
@@ -253,7 +253,7 @@ var JPSSBandM15Product = &Product{
 	ZoomAdjust:   1,
 }
 
-// JPSS Band M16 Product
+// JPSSBandM16Product is the JPSS Band M16 Product
 var JPSSBandM16Product = &Product{
 	ID:           "band-m16",
 	FriendlyName: "Band M16",
@@ -262,7 +262,7 @@ var JPSSBandM16Product = &Product{
 	ZoomAdjust:   1,
 }
 
-// JPSS Band I1 Product
+// JPSSBandI1Product is the JPSS Band I1 Product
 var JPSSBandI1Product = &Product{
 	ID:           "band-i1",
 	FriendlyName: "Band I1",
@@ -271,7 +271,7 @@ var JPSSBandI1Product = &Product{
 	ZoomAdjust:   0,
 }
 
-// JPSS Band I2 Product
+// JPSSBandI2Product is the JPSS Band I2 Product
 var JPSSBandI2Product = &Product{
 	ID:           "band-i2",
 	FriendlyName: "Band I2",
@@ -280,7 +280,7 @@ var JPSSBandI2Product = &Product{
 	ZoomAdjust:   0,
 }
 
-// JPSS Band I3 Product
+// JPSSBandI3Product is the JPSS Band I3 Product
 var JPSSBandI3Product = &Product{
 	ID:           "band-i3",
 	FriendlyName: "Band I3",
@@ -289,7 +289,7 @@ var JPSSBandI3Product = &Product{
 	ZoomAdjust:   0,
 }
 
-// JPSS Band I4 Product
+// JPSSBandI4Product is the JPSS Band I4 Product
 var JPSSBandI4Product = &Product{
 	ID:           "band-i4",
 	FriendlyName: "Band I4",
@@ -298,7 +298,7 @@ var JPSSBandI4Product = &Product{
 	ZoomAdjust:   0,
 }
 
-// JPSS Band I5 Product
+// JPSSBandI5Product is the JPSS Band I5 Product
 var JPSSBandI5Product = &Product{
 	ID:           "band-i5",
 	FriendlyName: "Band I5",

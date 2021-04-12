@@ -50,16 +50,14 @@ func (s *Sector) ProductMissing(product *Product) bool {
 func (s *Sector) XSize(zoom *Zoom) int {
 	if s.CropRatioX > 0 {
 		return int(float32(zoom.NumCells()*s.CellSize) * s.CropRatioX)
-	} else {
-		return zoom.NumCells() * s.CellSize
 	}
+	return zoom.NumCells() * s.CellSize
 }
 
 // YSize is the number of pixels along the Y-axis after the image is cropped
 func (s *Sector) YSize(zoom *Zoom) int {
 	if s.CropRatioY > 0 {
 		return int(float32(zoom.NumCells()*s.CellSize) * s.CropRatioY)
-	} else {
-		return zoom.NumCells() * s.CellSize
 	}
+	return zoom.NumCells() * s.CellSize
 }

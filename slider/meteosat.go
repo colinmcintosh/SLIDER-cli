@@ -15,7 +15,7 @@
 
 package slider
 
-// Meteosat-8 Satellite
+// Meteosat8Satellite is the Meteosat-8 Satellite
 var Meteosat8Satellite = &Satellite{
 	ID:           "meteosat-8",
 	FriendlyName: "Meteosat-8",
@@ -31,7 +31,7 @@ var Meteosat8Satellite = &Satellite{
 	ZoomLevels: MeteosatZoomLevels,
 }
 
-// Meteosat-11 Satellite
+// Meteosat11Satellite is the Meteosat-11 Satellite
 var Meteosat11Satellite = &Satellite{
 	ID:           "meteosat-11",
 	FriendlyName: "Meteosat-11",
@@ -75,7 +75,7 @@ var MeteosatZoomLevels = []*Zoom{
 	},
 }
 
-// Meteosat Full Disk Sector
+// MeteosatFullDiskSector is the Meteosat Full Disk Sector
 var MeteosatFullDiskSector = &Sector{
 	ID:           "fd",
 	FriendlyName: "Full Disk",

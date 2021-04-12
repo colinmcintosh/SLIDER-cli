@@ -146,7 +146,7 @@ Usage Examples:
 - [x] JPSS Satellite
 - [x] GOES Complete Sector List
 - [x] Himawari-8 Complete Sector List
-- [ ] Meteosat Complete Sector List
+- [x] Meteosat Complete Sector List
 - [x] JPSS Complete Sector List
 - [ ] GOES Complete Product List
 - [ ] Himawari-8 Complete Product List
@@ -156,10 +156,37 @@ Usage Examples:
 
 ### Known Issues
 
-- The 10000x6000px images for GOES Bands 1, 2, 3, & 5 are missing because I
-  don't know of a good source for them without the map overlays already
-  included. If anyone knows where to find these images please open a GitHub
-  issue and let me know.
-- At this time you can only specify a begin timestamp or an end timestamp but
-  not both at the same time. In the future I want to be able to support that
-  feature as an alternative to specifying an image count.
+- The 10000x6000px images for GOES Bands 1, 2, 3, & 5 are missing because I don't know of a good
+  source for them without the map overlays already included. If anyone knows where to find these
+  images please open a GitHub issue and let me know.
+- At this time you can only specify a begin timestamp or an end timestamp but not both at the same
+  time. In the future I want to be able to support that feature as an alternative to specifying an
+  image count.
+
+## Development
+
+To work on or build `slider-cli` locally you should have:
+
+- Golang 1.14 or later
+- CMake 4+
+- golangci-lint (`go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.39.0`)
+
+Use the following `make` commands:
+
+`make build` - build the `slider-cli` binary
+
+`make clean` - remove binaries and the `release` folder
+
+`make godoc` - start a local godoc server on `localhost:6060`
+
+`make lint` - run linting and staticcheck
+
+`make release` - build the release .zip and .sha256 files in the `release` folder
+
+`make sync` - download Golang dependencies with `go get`
+
+`make test` - run the test suite
+
+`make usage` - update USAGE.md and README.md with the usage text from the `--help` dialog
+
+PRs or Issues welcome!

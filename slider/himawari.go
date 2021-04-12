@@ -15,7 +15,7 @@
 
 package slider
 
-// Himawari-8 Satellite
+// Himawari8Satellite is the Himawari-8 Satellite
 var Himawari8Satellite = &Satellite{
 	ID:           "himawari-8",
 	FriendlyName: "Himawari-8",
@@ -36,7 +36,7 @@ var Himawari8Satellite = &Satellite{
 	ZoomLevels: GOESHimawariZoomLevels,
 }
 
-// Himawari Full Disk Sector
+// HimawariFullDiskSector is the Himawari Full Disk Sector
 var HimawariFullDiskSector = &Sector{
 	ID:              "fd",
 	FriendlyName:    "Full Disk",
@@ -46,7 +46,7 @@ var HimawariFullDiskSector = &Sector{
 	MissingProducts: []*Product{},
 }
 
-// Himawari Japan Sector
+// HimawariJapanSector is the Himawari Japan Sector
 var HimawariJapanSector = &Sector{
 	ID:           "japan",
 	FriendlyName: "Japan",
@@ -58,7 +58,7 @@ var HimawariJapanSector = &Sector{
 	},
 }
 
-// Himawari Mesoscale 1 Sector
+// HimawariMesoscale1Sector is the Himawari Mesoscale 1 Sector
 var HimawariMesoscale1Sector = &Sector{
 	ID:           "ms1",
 	FriendlyName: "Japan",

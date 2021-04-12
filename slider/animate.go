@@ -57,7 +57,7 @@ func AnimateGIF(images []image.Image, delay int, style LoopStyle) (*gif.GIF, err
 		newGIF.Image = make([]*image.Paletted, len(images))
 		newGIF.Delay = make([]int, len(images))
 	default:
-		return nil, fmt.Errorf("unkown animation loop style: %v", style)
+		return nil, fmt.Errorf("unknown animation loop style: %v", style)
 	}
 	for i, img := range images {
 		wg.Add(1)
@@ -119,7 +119,7 @@ func AnimatePNG(images []image.Image, delay int, style LoopStyle) (*apng.APNG, e
 	case ForwardLoop, ReverseLoop:
 		animation.Frames = make([]apng.Frame, len(images))
 	default:
-		return nil, fmt.Errorf("unkown animation loop style: %v", style)
+		return nil, fmt.Errorf("unknown animation loop style: %v", style)
 	}
 
 	for i, img := range images {
