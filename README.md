@@ -44,7 +44,7 @@ page to download the latest version. Or you can build the source code with
 
 ## Example Usage
 
-CONUS GeoColor:
+### CONUS GeoColor
 
 ```bash
 ./slider-cli --satellite=goes-16 --sector=conus --product=geocolor -z=2
@@ -52,7 +52,7 @@ CONUS GeoColor:
 
 ![Example CONUS Animation](examples/cira-rammb-slider---goes-16---conus---geocolor---20210407140615-20210407154115.gif)
 
-Eruption of the La Soufrière volcano on 2021-04-10:
+### Second 2021 Eruption of the La Soufrière volcano on 2021-04-10
 
 ```bash
 ./slider-cli -s=goes-16 -c=ms2 -p=geocolor -i=90 -b=20210410152000 -t=2 --speed=10 --crop=250,250,750,750
@@ -60,10 +60,12 @@ Eruption of the La Soufrière volcano on 2021-04-10:
 
 ![Example MS2 Animation](examples/cira-rammb-slider_goes-16_ms2_geocolor_500x500_20210410151951-20210410181751.gif)
 
+See the [examples/](examples) folder for more commands and example images, such as animated PNGs.
+
 ## Help Dialog
 
 ```
-slider-cli version v0.4.0-9cc29b1 (Built 2021-04-10T17:34:53Z)
+slider-cli version v0.4.0-10-ge93cfe1-e93cfe1 (Built 2021-04-12T02:23:56Z)
 
 Usage:
       --allow-stale        Allow imagery more than a year old -- filtering these images
@@ -79,6 +81,8 @@ Usage:
   -d, --dir string         Output filename to save rendered animation in. (default ".")
   -e, --end string         Desired image capture time of the last image in the loop. Use the
                            timestamp format YYYYMMDDhhmmss. This flag cannot be used with --begin.
+  -f, --format string      Output animation file format. Options are "gif" or "png". (default
+                           "gif")
       --help               Print help dialog.
   -i, --image-count int    Number of images in the loop. (default 6)
   -l, --loop string        Loop style. Options are 'forward', 'reverse', or 'rock'. Note that
