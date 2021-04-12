@@ -1,7 +1,7 @@
-name: Build, Test, & Lint
+name: Check PRs
 
 on:
-  push:
+  pull_request:
     branches: [ main ]
 
 jobs:
