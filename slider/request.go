@@ -183,6 +183,10 @@ func DownloadImage(uri string) (image.Image, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to get available dates: %w", err)
 	}
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("unable to download image: %s: HTTP%d", uri, resp.StatusCode)
+	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	img, err := png.Decode(resp.Body)
