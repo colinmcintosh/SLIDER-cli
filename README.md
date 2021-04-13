@@ -183,6 +183,8 @@ Use the following `make` commands:
 
 `make build` - build the `slider-cli` binary
 
+`make check` - run all of the CI checks: `build`, `test`, and `lint`
+
 `make clean` - remove binaries and the `release` folder
 
 `make godoc` - start a local godoc server on `localhost:6060`

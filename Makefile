@@ -11,6 +11,8 @@ build: clean
 	go build -o slider-cli $(GOFLAGS) .
 	./slider-cli --version
 
+check: build test lint
+
 clean:
 	rm -f slider-cli
 	rm -rf release
