@@ -16,11 +16,8 @@
 package slider
 
 import (
-	"bufio"
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/disintegration/imaging"
 	"github.com/rs/zerolog/log"
 	"image"
 	"image/png"
@@ -56,17 +53,17 @@ import (
 //		&x=12664.071436031289
 //		&y=10806.47205375142
 
-// ImageURI is the request address for images. It contains the following fields:
+// TileImageURI is the request address for images. It contains the following fields:
 // 	- Date
 //  - Satellite
 //  - Sector
 //	- Product
 //	- Image Timestamp
 //  - Zoom Level
-//  - Section Y-Position
-//  - Section X-Position
+//  - Tile Y-Position
+//  - Tile X-Position
 // 	Example: https://rammb-slider.cira.colostate.edu/data/imagery/20210404/jpss---northern_hemisphere/cira_geocolor/20210404215820/04/011_007.png
-const ImageURI = "https://rammb-slider.cira.colostate.edu/data/imagery/%s/%s---%s/%s/%s/%02d/%03d_%03d.png"
+const TileImageURI = "https://rammb-slider.cira.colostate.edu/data/imagery/%s/%s---%s/%s/%s/%02d/%03d_%03d.png"
 
 // AvailableDatesURI is the address for retrieving the latest dates for available images.
 //  - Satellite
@@ -160,23 +157,28 @@ func LatestTimes(satellite *Satellite, sector *Sector, product *Product, count i
 	return data.TimestampsInt, nil
 }
 
-// ImageRequest contains the parameters required to request an individual image cell from SLIDER.
-type ImageRequest struct {
-	Date             string
-	Satellite        string
-	Sector           string
-	Product          string
-	ImageTimestamp   string
-	ZoomLevel        int
-	SectionXPosition int
-	SectionYPosition int
+// TileImageRequest contains the parameters required to request an individual image cell from SLIDER.
+type TileImageRequest struct {
+	Date           string
+	Satellite      string
+	Sector         string
+	Product        string
+	ImageTimestamp string
+	ZoomLevel      int
+	TileXPosition  int
+	TileYPosition  int
 }
 
-// DownloadImage downloads an individual image cell from SLIDER.
-func DownloadImage(request *ImageRequest) (image.Image, error) {
-	uri := fmt.Sprintf(ImageURI, request.Date, request.Satellite, request.Sector, request.Product,
-		request.ImageTimestamp, request.ZoomLevel, request.SectionYPosition, request.SectionXPosition)
-	log.Debug().Msgf("Downloading image from: %s", uri)
+// ImageTileURL returns the full request URL for an image tile.
+func ImageTileURL(request *TileImageRequest) string {
+	uri := fmt.Sprintf(TileImageURI, request.Date, request.Satellite, request.Sector, request.Product,
+		request.ImageTimestamp, request.ZoomLevel, request.TileYPosition, request.TileXPosition)
+	return uri
+}
+
+// DownloadImage downloads an individual image file.
+func DownloadImage(uri string) (image.Image, error) {
+	log.Debug().Msgf("Downloading image file: %s", uri)
 	resp, err := http.Get(uri)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get available dates: %w", err)
@@ -186,12 +188,6 @@ func DownloadImage(request *ImageRequest) (image.Image, error) {
 	img, err := png.Decode(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode image response: %w", err)
-	}
-
-	var gifBytes bytes.Buffer
-	err = imaging.Encode(bufio.NewWriter(&gifBytes), img, imaging.GIF)
-	if err != nil {
-		return nil, fmt.Errorf("unable to encode PNG image as GIF: %w", err)
 	}
 
 	return img, nil

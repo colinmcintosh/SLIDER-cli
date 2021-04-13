@@ -1,6 +1,6 @@
 
 ```
-slider-cli version v0.4.0-10-ge93cfe1-e93cfe1 (Built 2021-04-12T02:23:56Z)
+slider-cli version v0.4.0-13-g0559fc5-0559fc5 (Built 2021-04-13T01:10:31Z)
 
 Usage:
       --allow-stale        Allow imagery more than a year old -- filtering these images
@@ -8,6 +8,8 @@ Usage:
       --angle int          Degrees to rotate the animation.
   -b, --begin string       Desired image capture time of the first image in the loop. Use the
                            timestamp format YYYYMMDDhhmmss. This flag cannot be used with --end.
+      --cache string       Directory to cache downloaded images in. Caching will not be used
+                           if a cache directory is not provided.
       --crop ints          List of points in the final image (before rotation) to crop to. Use
                            the format X1,Y1,X2,Y2 for the rectangle you want to crop to.
       --date-list          Print a list of available dates
