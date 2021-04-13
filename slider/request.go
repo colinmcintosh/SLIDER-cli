@@ -157,7 +157,7 @@ func LatestTimes(satellite *Satellite, sector *Sector, product *Product, count i
 	return data.TimestampsInt, nil
 }
 
-// TileImageRequest contains the parameters required to request an individual image cell from SLIDER.
+// TileImageRequest contains the parameters required to request an individual image tile from SLIDER.
 type TileImageRequest struct {
 	Date           string
 	Satellite      string
@@ -181,7 +181,7 @@ func DownloadImage(uri string) (image.Image, error) {
 	log.Debug().Msgf("Downloading image file: %s", uri)
 	resp, err := http.Get(uri)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get available dates: %w", err)
+		return nil, fmt.Errorf("unable to get image file: %w", err)
 	}
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("unable to download image: %s: HTTP%d", uri, resp.StatusCode)

@@ -56,7 +56,7 @@ page to download the latest version. Or you can build the source code with
 ### Second 2021 Eruption of the La Soufrière volcano on 2021-04-10
 
 ```bash
-./slider-cli -s=goes-16 -c=ms2 -p=geocolor -i=90 -b=20210410152000 -t=2 --speed=10 --crop=250,250,750,750
+./slider-cli -s=goes-16 -c=mesoscale-02 -p=geocolor -i=90 -b=20210410152000 -t=2 --speed=10 --crop=250,250,750,750
 ```
 
 ![Example MS2 Animation](examples/cira-rammb-slider_goes-16_ms2_geocolor_500x500_20210410151951-20210410181751.gif)
@@ -114,8 +114,8 @@ Usage:
 Usage Examples:
     ./slider-cli --satellite-list
     ./slider-cli --sector-list --satellite=goes-16
-    ./slider-cli --satellite=goes-16 --sector=conus --product=geocolor -z=2
-    ./slider-cli --satellite=goes-16 --sector=conus --product=band-1 -i=20 -t=10
+    ./slider-cli --satellite=goes-16 --sector=conus --product=band-01 -z=2
+    ./slider-cli --satellite=goes-16 --sector=conus --product=geocolor -i=24 -t=60
 ```
 
 ## Feature To-Do List
@@ -155,12 +155,12 @@ Usage Examples:
 - [x] Himawari-8 Complete Sector List
 - [x] Meteosat Complete Sector List
 - [x] JPSS Complete Sector List
-- [ ] GOES Complete Product List
-- [ ] Himawari-8 Complete Product List
-- [ ] Meteosat Complete Product List
-- [ ] JPSS Complete Product List
+- [x] GOES Complete Product List
+- [x] Himawari-8 Complete Product List
+- [x] Meteosat Complete Product List
+- [x] JPSS Complete Product List
 - [x] Local Image Caching
-- [ ] Import products from `define-products.js` (requires some investigation)
+- [x] Import products from `define-products.js`
 
 ### Known Issues
 
@@ -175,7 +175,7 @@ Usage Examples:
 
 To work on or build `slider-cli` locally you should have:
 
-- Golang 1.14 or later
+- Golang 1.14+
 - GNU Make 4+
 - golangci-lint (`go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.39.0`)
 
