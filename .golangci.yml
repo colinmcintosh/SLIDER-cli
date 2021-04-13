@@ -1,0 +1,27 @@
+linters:
+  enable:
+    - deadcode
+    - errcheck
+    - gocyclo
+    - gofmt
+    - golint
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - megacheck
+    - misspell
+    - staticcheck
+    - structcheck
+    - typecheck
+    - unused
+    - varcheck
+  disable-all: true
+
+issues:
+  exclude-use-default: false
+  exclude:
+    # gosec (G107): Not a high-risk issue from the perspective of a command-line utility.
+    - 'Potential HTTP request made with variable url'
+    # gosec (G304): Not a high-risk issue from the perspective of a command-line utility.
+    - 'Potential file inclusion via variable'
