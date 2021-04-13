@@ -32,42 +32,42 @@ import (
 
 // LoopOptions are the config options used to create a new loop.
 type LoopOptions struct {
-	// Satellite is the satellite to request imagery from.
-	Satellite *Satellite
-	// Sector is the sector to request imagery for.
-	Sector *Sector
-	// Product is the product to request imagery for.
-	Product *Product
+	// AllowStaleImages allows imagery that is over one year old to be included in animations. Disallowing this old
+	// imagery by default helps to prevent old images from being accidentally included in loops.
+	AllowStaleImages bool
+	// Angle is the number of degrees to rotate the image.
+	Angle float64
+	// BeginTime is the desired capture time of the first image in the loop.
+	BeginTime time.Time
+	// CacheDirectory is the directory to cache downloaded images in. Caching will only happen if a directory is
+	// supplied here.
+	CacheDirectory string
+	// Crop is the area to crop the animation to.
+	Crop *image.Rectangle
+	// EndTime is the desired capture time of the last image in the loop.
+	EndTime time.Time
+	// FileFormat is the output file format of the animation.
+	FileFormat FileFormat
 	// LoopStyle is the animation style of the output animation.
 	Loop LoopStyle
 	// NumberOfImages is the number of frames in the output animation.
 	NumberOfImages int
-	// Angle is the number of degrees to rotate the image.
-	Angle float64
-	// Crop is the area to crop the animation to.
-	Crop *image.Rectangle
+	// OutputDirectory is the directory to save output animations in.
+	OutputDirectory string
+	// Product is the product to request imagery for.
+	Product *Product
+	// Satellite is the satellite to request imagery from.
+	Satellite *Satellite
+	// Sector is the sector to request imagery for.
+	Sector *Sector
 	// Speed is the interval between frames. A higher number increases the delay between frames.
 	Speed int
+	// TimeStep is the interval between image capture times in minutes.
+	TimeStep int
 	// ZoomLevel is the zoom level to request imagery for. Increasing ZoomLevel increases the output animation
 	// resolution and therefore filesize.
 	ZoomLevel int
-	// TimeStep is the interval between image capture times in minutes.
-	TimeStep int
-	// BeginTime is the desired capture time of the first image in the loop.
-	BeginTime time.Time
-	// EndTime is the desired capture time of the last image in the loop.
-	EndTime time.Time
-	// CacheDirectory is the directory to cache downloaded images in. Caching will only happen if a directory is
-	// supplied here.
-	CacheDirectory string
-	// OutputDirectory is the directory to save output animations in.
-	OutputDirectory string
-	// AllowStaleImages allows imagery that is over one year old to be included in animations. Disallowing this old
-	// imagery by default helps to prevent old images from being accidentally included in loops.
-	AllowStaleImages bool
-	// FileFormat is the output file format of the animation.
-	FileFormat FileFormat
-	zoom       *Zoom
+	zoom      *Zoom
 }
 
 // FileFormat is an output file format type.
@@ -98,12 +98,12 @@ func CreateLoop(opts *LoopOptions) error {
 			"Continuing with the maximum amount.", len(selectedTimes), opts.NumberOfImages)
 	}
 
-	if (opts.Sector.MaxZoomLevel - opts.Product.ZoomAdjust) < opts.ZoomLevel {
+	if (opts.Sector.MaxZoomLevel - opts.Product.ZoomLevelAdjust) < opts.ZoomLevel {
 		return fmt.Errorf("ZoomLevel %d is greater than sector or product max of %d",
-			opts.ZoomLevel, opts.Sector.MaxZoomLevel-opts.Product.ZoomAdjust)
+			opts.ZoomLevel, opts.Sector.MaxZoomLevel-opts.Product.ZoomLevelAdjust)
 	}
 
-	opts.zoom = opts.Satellite.ZoomLevels[opts.ZoomLevel]
+	opts.zoom = opts.Satellite.ZoomLevels()[opts.ZoomLevel]
 
 	// Get/Download Images
 	images, err := getImages(opts, selectedTimes)
@@ -149,9 +149,9 @@ func getImages(opts *LoopOptions, selectedTimes []time.Time) ([]image.Image, err
 	for i, timestamp := range selectedTimes {
 		wg.Add(1)
 		go func(timestamp time.Time, i int) {
-			canvas := imaging.New(opts.Sector.CellSize*opts.zoom.NumCells(), opts.Sector.CellSize*opts.zoom.NumCells(), color.NRGBA{})
-			for x := 0; x < opts.zoom.NumCells(); x++ {
-				for y := 0; y < opts.zoom.NumCells(); y++ {
+			canvas := imaging.New(opts.Sector.TileSize*opts.zoom.NumTiles(), opts.Sector.TileSize*opts.zoom.NumTiles(), color.NRGBA{})
+			for x := 0; x < opts.zoom.NumTiles(); x++ {
+				for y := 0; y < opts.zoom.NumTiles(); y++ {
 					imageTileURL := ImageTileURL(&TileImageRequest{
 						Date:           timestamp.Format("20060102"),
 						Satellite:      opts.Satellite.Value,
@@ -177,7 +177,7 @@ func getImages(opts *LoopOptions, selectedTimes []time.Time) ([]image.Image, err
 							return
 						}
 					}
-					canvas = imaging.Paste(canvas, tile, image.Pt(x*opts.Sector.CellSize, y*opts.Sector.CellSize))
+					canvas = imaging.Paste(canvas, tile, image.Pt(x*opts.Sector.TileSize, y*opts.Sector.TileSize))
 				}
 			}
 			if opts.Sector.CropRatioX > 0 && opts.Sector.CropRatioY > 0 {
@@ -357,12 +357,17 @@ func makeFileName(opts *LoopOptions, startTime string, endTime string) string {
 		y = opts.Sector.YSize(opts.zoom)
 	}
 	return fmt.Sprintf("cira-rammb-slider_%s_%s_%s_%dx%d_%s-%s",
-		opts.Satellite.ID, opts.Sector.ID, opts.Product.ID, x, y, startTime, endTime)
+		opts.Satellite.ID(), opts.Sector.ID(), opts.Product.ID(), x, y, startTime, endTime)
 }
 
 // LoopOptsFromURL creates a new set of loop options from a SLIDER URL starting with
 // https://rammb-slider.cira.colostate.edu/?...
 func LoopOptsFromURL(uri string) (*LoopOptions, error) {
+	inventory, err := GetProductInventory()
+	if err != nil {
+		return nil, fmt.Errorf("unable to load product inventory: %w", err)
+	}
+
 	u, err := url.Parse(uri)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse URL: %w", err)
@@ -374,7 +379,7 @@ func LoopOptsFromURL(uri string) (*LoopOptions, error) {
 
 	var satellite *Satellite
 	if data.Get("sat") != "" {
-		for _, s := range Satellites {
+		for _, s := range inventory.Satellites {
 			if s.Value == data.Get("sat") {
 				satellite = s
 			}

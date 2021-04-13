@@ -15,16 +15,19 @@
 
 package slider
 
-import "math"
+import (
+	"github.com/stretchr/testify/require"
+	"io/ioutil"
+	"testing"
+)
 
-// Zoom contains information for a single zoom level or resolution.
-type Zoom struct {
-	Level int
-	Scale string
-}
-
-// NumTiles is the number of tiles along each axis of the image.
-// Tile X/Y axis origin (0,0) is the upper-left-hand corner of the image.
-func (z *Zoom) NumTiles() int {
-	return int(math.Pow(2, float64(z.Level)))
+func TestParseProductsJS(t *testing.T) {
+	data, err := ioutil.ReadFile("testdata/define-products.js")
+	require.NoError(t, err)
+	require.NotEmpty(t, data)
+	inventory, err := ParseProductsJS(data)
+	require.NoError(t, err)
+	require.NotNil(t, inventory)
+	require.Len(t, inventory.Satellites, 6)
+	require.Equal(t, "GOES-16 (East; 75.2W)", inventory.Satellites["goes-16"].SatelliteTitle)
 }

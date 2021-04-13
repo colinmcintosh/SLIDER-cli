@@ -15,22 +15,46 @@
 
 package slider
 
+import (
+	"strings"
+)
+
 // Satellite contains all of the information for a single weather satellite and all of it's sectors and products.
 type Satellite struct {
-	// ID is the value sent in the request to SLIDER
-	ID string
-	// FriendlyName is the friendly human-readable name for this satellite
-	FriendlyName string
-	// Description is a short description of the satellite details
-	Description string
-	// Value is the string sent to SLIDER for this satellite when requesting images
-	Value string
-	// Sectors contains a list of available sectors for this Satellite keyed by ID.
-	Sectors map[string]*Sector
+	// Defaults contains default settings for products on this satellite
+	Defaults *ProductDefaults `json:"defaults"`
+	// DefaultSector is the default sector selected by SLIDER
+	DefaultSector string `json:"default_sector"`
+	// ImageryResolutions is the list of imagery resolutions used by SLIDER. Using ZoomLevels() is preferred to
+	// to using ImageryResolutions.
+	ImageryResolutions map[string]string `json:"imagery_resolutions"`
 	// Products contains a list of available products for this satellite keyed by ID.
 	Products map[string]*Product
-	// ZoomLevels is the list of available zoom levels or resolutions for this satellite
-	ZoomLevels []*Zoom
+	// SatelliteTitle is the friendly human-readable name for this satellite
+	SatelliteTitle string `json:"satellite_title"`
+	// Sectors contains a list of available sectors for this Satellite keyed by ID.
+	Sectors map[string]*Sector
+	// Value is the string sent to SLIDER for this satellite when requesting images
+	Value string
+}
+
+// ID is the value sent in the request to SLIDER
+func (s *Satellite) ID() string {
+	return strings.ReplaceAll(s.Value, "_", "-")
+}
+
+// ZoomLevels is the list of available zoom levels or resolutions for this satellite
+func (s *Satellite) ZoomLevels() []*Zoom {
+	zoomLevels := make([]*Zoom, len(s.ImageryResolutions))
+	var i int
+	for _, v := range s.ImageryResolutions {
+		zoomLevels[i] = &Zoom{
+			Level: i,
+			Scale: v,
+		}
+		i++
+	}
+	return zoomLevels
 }
 
 // ValidSector returns true if the provided sector is available for this satellite.
@@ -38,7 +62,7 @@ func (s *Satellite) ValidSector(sector *Sector) bool {
 	if s.Sectors == nil {
 		return false
 	}
-	c, ok := s.Sectors[sector.ID]
+	c, ok := s.Sectors[sector.Value]
 	if !ok {
 		return false
 	}
@@ -53,7 +77,7 @@ func (s *Satellite) ValidProduct(product *Product) bool {
 	if s.Products == nil {
 		return false
 	}
-	p, ok := s.Products[product.ID]
+	p, ok := s.Products[product.Value]
 	if !ok {
 		return false
 	}
@@ -77,14 +101,4 @@ func (s *Satellite) ValidSectorProduct(sector *Sector, product *Product) bool {
 		return false
 	}
 	return true
-}
-
-// Satellites contains all of the available and included satellites.
-var Satellites = map[string]*Satellite{
-	GOES16Satellite.ID:     GOES16Satellite,
-	GOES17Satellite.ID:     GOES17Satellite,
-	Himawari8Satellite.ID:  Himawari8Satellite,
-	Meteosat8Satellite.ID:  Meteosat8Satellite,
-	Meteosat11Satellite.ID: Meteosat11Satellite,
-	JPSSSatellite.ID:       JPSSSatellite,
 }

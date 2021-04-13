@@ -182,23 +182,28 @@ func handleFlags(config *viper.Viper) {
 		os.Exit(0)
 	}
 
+	inventory, err := slider.GetProductInventory()
+	if err != nil {
+		log.Fatal().Msgf("unable to load product inventory: %v", err)
+	}
+
 	if config.GetBool("satellite-list") {
 		fmt.Println("Available Satellites")
-		keys := make([]string, 0, len(slider.Satellites))
-		for k := range slider.Satellites {
+		keys := make([]string, 0, len(inventory.Satellites))
+		for k := range inventory.Satellites {
 			keys = append(keys, k)
 		}
 		sort.Strings(keys)
 		for _, k := range keys {
-			satellite := slider.Satellites[k]
-			fmt.Printf("%20s = %s (%s)\n", satellite.ID, satellite.FriendlyName, satellite.Description)
+			satellite := inventory.Satellites[k]
+			fmt.Printf("%20s = %s\n", satellite.ID(), satellite.SatelliteTitle)
 		}
 		os.Exit(0)
 	}
 
 	var satellite *slider.Satellite
 	if id := config.GetString("satellite"); id != "" {
-		satellite = slider.Satellites[id]
+		satellite = inventory.Satellites[id]
 		if satellite == nil {
 			log.Fatal().Msgf("'%s' is not a valid satellite."+
 				"Check --satellite-list for the available options.", id)
@@ -215,10 +220,10 @@ func handleFlags(config *viper.Viper) {
 			keys = append(keys, k)
 		}
 		sort.Strings(keys)
-		fmt.Printf("Available Sectors on Satellite %s\n", satellite.FriendlyName)
+		fmt.Printf("Available Sectors on Satellite %s\n", satellite.SatelliteTitle)
 		for _, k := range keys {
 			sector := satellite.Sectors[k]
-			fmt.Printf("%20s = %s\n", sector.ID, sector.FriendlyName)
+			fmt.Printf("%20s = %s\n", sector.ID(), sector.SectorTitle)
 		}
 		os.Exit(0)
 	}
@@ -232,7 +237,7 @@ func handleFlags(config *viper.Viper) {
 		sector = satellite.Sectors[id]
 		if sector == nil {
 			log.Fatal().Msgf("'%s' is not a valid sector for the '%s' satellite. "+
-				"Check --sector-list for the available options.", id, satellite.ID)
+				"Check --sector-list for the available options.", id, satellite.ID())
 		}
 	}
 
@@ -241,12 +246,13 @@ func handleFlags(config *viper.Viper) {
 			log.Fatal().Msg("You must set --satellite and --sector first to list available zoom levels.")
 			os.Exit(1)
 		}
-		fmt.Printf("Zoom Levels for Sector %s on Satellite %s", sector.FriendlyName, satellite.FriendlyName)
-		for _, zoom := range satellite.ZoomLevels {
+		fmt.Printf("Zoom Levels for Sector %s on Satellite %s\n", sector.SectorTitle, satellite.SatelliteTitle)
+		for _, zoom := range satellite.ZoomLevels() {
 			if zoom.Level > sector.MaxZoomLevel {
 				continue
 			}
-			fmt.Printf("%5d = %dpx x %dpx", zoom.Level, sector.XSize(zoom), sector.YSize(zoom))
+			fmt.Printf("%5d = %s (%dpx x %dpx)\n", zoom.Level, zoom.Scale,
+				sector.XSize(zoom), sector.YSize(zoom))
 		}
 		os.Exit(0)
 	}
@@ -262,15 +268,15 @@ func handleFlags(config *viper.Viper) {
 		}
 		sort.Strings(keys)
 
-		fmt.Printf("Available Products for Sector %s on Satellite %s",
-			sector.FriendlyName, satellite.FriendlyName)
+		fmt.Printf("Available Products for Sector %s on Satellite %s\n",
+			sector.SectorTitle, satellite.SatelliteTitle)
 
 		for _, k := range keys {
 			product := satellite.Products[k]
 			if sector.ProductMissing(product) {
 				continue
 			}
-			fmt.Printf("%30s = %s (%s)", product.ID, product.FriendlyName, product.Description)
+			fmt.Printf("%50s = %s\n", product.ID(), product.ProductTitle)
 		}
 		os.Exit(0)
 	}
@@ -284,7 +290,7 @@ func handleFlags(config *viper.Viper) {
 		product = satellite.Products[id]
 		if product == nil || sector.ProductMissing(product) {
 			log.Fatal().Msgf("'%s' is not a valid sector product for the '%s' satellite. "+
-				"Check --product-list for the available options.", id, satellite.ID)
+				"Check --product-list for the available options.", id, satellite.ID())
 		}
 	}
 
@@ -361,7 +367,7 @@ func handleFlags(config *viper.Viper) {
 			config.GetString("format"))
 	}
 
-	err := slider.CreateLoop(&slider.LoopOptions{
+	err = slider.CreateLoop(&slider.LoopOptions{
 		Satellite:       satellite,
 		Sector:          sector,
 		Product:         product,

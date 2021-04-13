@@ -16,22 +16,24 @@
 package slider
 
 import (
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
 func TestLoopOptsFromURL(t *testing.T) {
+	NoProductDownload = true
 	var TestURI = "https://rammb-slider.cira.colostate.edu/?sat=himawari&sec=full_disk&x=11008&y=11008&z=0&angle=0&im=12&ts=1&st=0&et=0&speed=130&motion=loop&maps%5Bborders%5D=off&maps%5Bstates%5D=white&maps%5Bcities%5D=white&mops%5Bstates%5D=0.2&lat=0&p%5B0%5D=geocolor&opacity%5B0%5D=1&pause=20210408211114&slider=-1&hide_controls=0&mouse_draw=0&follow_feature=0&follow_hide=0&s=rammb-slider"
 	got, err := LoopOptsFromURL(TestURI)
 	require.NoError(t, err)
-	require.Equal(t, Himawari8Satellite, got.Satellite, "Incorrect satellite")
-	require.Equal(t, HimawariFullDiskSector, got.Sector, "Incorrect sector")
-	require.Equal(t, CIRAGeoColorProduct, got.Product, "Incorrect product")
-	require.Equal(t, ForwardLoop, got.Loop, "Incorrect loop style")
-	require.Equal(t, float64(0), got.Angle, "Incorrect angle")
-	require.Equal(t, 12, got.NumberOfImages, "Incorrect number of images")
-	require.Equal(t, 13, got.Speed, "Incorrect speed")
-	require.Equal(t, 0, got.ZoomLevel, "Incorrect zoom")
-	require.Zero(t, got.BeginTime, "Incorrect end time")
-	require.Zero(t, got.EndTime, "Incorrect end time")
+	assert.Equal(t, "himawari", got.Satellite.ID(), "Incorrect satellite")
+	assert.Equal(t, "full-disk", got.Sector.ID(), "Incorrect sector")
+	assert.Equal(t, "geocolor", got.Product.ID(), "Incorrect product")
+	assert.Equal(t, ForwardLoop, got.Loop, "Incorrect loop style")
+	assert.Equal(t, float64(0), got.Angle, "Incorrect angle")
+	assert.Equal(t, 12, got.NumberOfImages, "Incorrect number of images")
+	assert.Equal(t, 13, got.Speed, "Incorrect speed")
+	assert.Equal(t, 0, got.ZoomLevel, "Incorrect zoom")
+	assert.Zero(t, got.BeginTime, "Incorrect end time")
+	assert.Zero(t, got.EndTime, "Incorrect end time")
 }

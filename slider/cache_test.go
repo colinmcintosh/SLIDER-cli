@@ -15,36 +15,16 @@
 
 package slider
 
-import "testing"
+import (
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"testing"
+)
 
 func TestURLToFilePath(t *testing.T) {
-	type args struct {
-		urlString string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    string
-		wantErr bool
-	}{
-		{
-			name: "#1",
-			args: args{
-				urlString: "https://rammb-slider.cira.colostate.edu/data/imagery/20210404/jpss---northern_hemisphere/cira_geocolor/20210404215820/04/011_007.png",
-			},
-			want: "rammb-slider.cira.colostate.edu/data/imagery/20210404/jpss---northern_hemisphere/cira_geocolor/20210404215820/04/011_007.png",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := URLToFilePath(tt.args.urlString)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("URLToFilePath() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("URLToFilePath() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	const url = "https://rammb-slider.cira.colostate.edu/data/imagery/20210404/jpss---northern_hemisphere/cira_geocolor/20210404215820/04/011_007.png"
+	const expected = "rammb-slider.cira.colostate.edu/data/imagery/20210404/jpss---northern_hemisphere/cira_geocolor/20210404215820/04/011_007.png"
+	got, err := URLToFilePath(url)
+	require.NoError(t, err)
+	assert.Equal(t, expected, got)
 }
