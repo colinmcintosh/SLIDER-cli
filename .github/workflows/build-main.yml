@@ -58,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: [ '1.14', '1.15', '1.16' ]
+        go: [ '1.16' ]
     steps:
       - name: Set up timezone
         uses: zcong1993/setup-timezone@v1.0
@@ -78,4 +78,4 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           version: latest
-          args: --disable-all -E deadcode,errcheck,gocyclo,gofmt,golint,gosimple,govet,ineffassign,misspell,staticcheck,structcheck,typecheck,unused,varcheck
+          skip-go-installation: true

@@ -70,10 +70,13 @@ type LoopOptions struct {
 	zoom       *Zoom
 }
 
+// FileFormat is an output file format type.
 type FileFormat int
 
 const (
+	// GIF is the .gif file format.
 	GIF FileFormat = iota
+	// PNG is the .png file format.
 	PNG
 )
 
@@ -357,6 +360,8 @@ func makeFileName(opts *LoopOptions, startTime string, endTime string) string {
 		opts.Satellite.ID, opts.Sector.ID, opts.Product.ID, x, y, startTime, endTime)
 }
 
+// LoopOptsFromURL creates a new set of loop options from a SLIDER URL starting with
+// https://rammb-slider.cira.colostate.edu/?...
 func LoopOptsFromURL(uri string) (*LoopOptions, error) {
 	u, err := url.Parse(uri)
 	if err != nil {

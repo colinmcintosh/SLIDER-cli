@@ -97,13 +97,16 @@ func SaveGIF(output string, img *gif.GIF) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	f, _ := os.OpenFile(output+".gif", os.O_WRONLY|os.O_CREATE, 0644)
-	defer func() { _ = f.Close() }()
+	f, _ := os.OpenFile(output+".gif", os.O_WRONLY|os.O_CREATE, 0600)
 	err = gif.EncodeAll(f, img)
 	if err != nil {
 		return "", fmt.Errorf("unable to encode GIF: %w", err)
 	}
 	log.Debug().Msgf("Saved GIF to '%s'", output+".gif")
+	err = f.Close()
+	if err != nil {
+		return "", fmt.Errorf("unable to close GIF file: %w", err)
+	}
 	return output + ".gif", nil
 }
 
@@ -151,13 +154,16 @@ func SavePNG(output string, img *apng.APNG) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	f, _ := os.OpenFile(output+".png", os.O_WRONLY|os.O_CREATE, 0644)
-	defer func() { _ = f.Close() }()
+	f, _ := os.OpenFile(output+".png", os.O_WRONLY|os.O_CREATE, 0600)
 	err = apng.Encode(f, *img)
 	if err != nil {
 		return "", fmt.Errorf("unable to encode PNG: %w", err)
 	}
 	log.Debug().Msgf("Saved PNG to '%s'", output+".png")
+	err = f.Close()
+	if err != nil {
+		return "", fmt.Errorf("unable to close PNG file: %w", err)
+	}
 	return output + ".png", nil
 }
 

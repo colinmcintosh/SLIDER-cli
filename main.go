@@ -38,7 +38,7 @@ var Version = "develop"
 // BuildTime is the build timestamp and is set during build time by GOLDFLAGS.
 var BuildTime = "develop"
 
-func ParseFlags() {
+func parseFlags() {
 	pflag.Bool("date-list", false, "Print a list of available dates")
 	pflag.Bool("satellite-list", false, "Print a list of available satellites")
 	pflag.Bool("sector-list", false, "Print a list of available satellite sectors")
@@ -106,11 +106,11 @@ func helpText(wrapped bool) {
 	_, _ = fmt.Fprintf(os.Stdout, "    ./slider-cli --satellite=goes-16 --sector=conus --product=band-1 -i=20 -t=10\n\n")
 }
 
-func LoadConfig() (*viper.Viper, error) {
+func loadConfig() (*viper.Viper, error) {
 	v := viper.New()
 
 	// Flags
-	ParseFlags()
+	parseFlags()
 	err := v.BindPFlags(pflag.CommandLine)
 	if err != nil {
 		return nil, fmt.Errorf("unable to bind flags to config: %w", err)
@@ -142,7 +142,7 @@ func main() {
 		os.Exit(0)
 	}()
 
-	config, err := LoadConfig()
+	config, err := loadConfig()
 	if err != nil {
 		log.Fatal().Msgf("unable to load config: %v", err)
 	}

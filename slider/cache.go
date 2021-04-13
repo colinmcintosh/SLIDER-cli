@@ -26,6 +26,7 @@ import (
 	"strings"
 )
 
+// ImageCache is a file system cache for image files.
 type ImageCache struct {
 	// Dir is the directory to store the cache in.
 	Dir string
@@ -71,14 +72,16 @@ func (c *ImageCache) Delete(filePath string) error {
 	return nil
 }
 
+// Write will store an image at the file path. Write will overwrite any existing files and create missing paths
+// or directories.
 func (c *ImageCache) Write(filePath string, img image.Image) error {
 	fullPath := path.Join(c.Dir, filePath)
-	err := os.MkdirAll(path.Dir(fullPath), 0755)
+	err := os.MkdirAll(path.Dir(fullPath), 0750)
 	if err != nil {
 		return fmt.Errorf("unable to create path for cache: %s: %w", fullPath, err)
 	}
 
-	f, err := os.OpenFile(fullPath, os.O_WRONLY|os.O_CREATE, 0755)
+	f, err := os.OpenFile(fullPath, os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
 		return fmt.Errorf("unable to open cache file for writing: %s: %w", fullPath, err)
 	}
@@ -100,6 +103,9 @@ func (c *ImageCache) Write(filePath string, img image.Image) error {
 	return nil
 }
 
+// URLToFilePath converts a URL to a file system path by removing the URL scheme (e.g. https://) and converting
+// the URL path to a file system directory path. For example 'https://example.com/a/b/c/d' will return
+// 'example.com/a/b/c/d'
 func URLToFilePath(urlString string) (string, error) {
 	u, err := url.Parse(urlString)
 	if err != nil {
