@@ -66,7 +66,7 @@ See the [examples/](examples) folder for more commands and example images, such 
 ## Help Dialog
 
 ```
-slider-cli version v0.4.0-13-g0559fc5-0559fc5 (Built 2021-04-13T01:10:31Z)
+slider-cli version v0.5.0-f08be72 (Built 2021-04-13T07:56:03Z)
 
 Usage:
       --allow-stale        Allow imagery more than a year old -- filtering these images
@@ -114,8 +114,8 @@ Usage:
 Usage Examples:
     ./slider-cli --satellite-list
     ./slider-cli --sector-list --satellite=goes-16
-    ./slider-cli --satellite=goes-16 --sector=conus --product=band-01 -z=2
-    ./slider-cli --satellite=goes-16 --sector=conus --product=geocolor -i=24 -t=60
+    ./slider-cli --satellite=goes-16 --sector=conus --product=geocolor -z=2
+    ./slider-cli --satellite=goes-16 --sector=conus --product=band-1 -i=20 -t=10
 ```
 
 ## Feature To-Do List

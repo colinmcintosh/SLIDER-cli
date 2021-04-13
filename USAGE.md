@@ -1,6 +1,6 @@
 
 ```
-slider-cli version v0.4.0-13-g0559fc5-0559fc5 (Built 2021-04-13T01:10:31Z)
+slider-cli version v0.5.0-f08be72 (Built 2021-04-13T07:56:03Z)
 
 Usage:
       --allow-stale        Allow imagery more than a year old -- filtering these images
