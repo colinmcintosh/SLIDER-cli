@@ -47,61 +47,6 @@ func (p *Product) ID() string {
 	return strings.ReplaceAll(p.Value, "_", "-")
 }
 
-// ProductsJSURL is the address to download the latest product data from.
-const ProductsJSURL = "https://rammb-slider.cira.colostate.edu/js/define-products.js"
-
-// NoProductDownload will disable downloading the latest products from SLIDER.
-var NoProductDownload = false
-
-var latestProductInventory *ProductInventory
-var productsJSPreamble = []byte("var json = ")
-var productsJSEnd = []byte("};")
-
-// ParseProductsJS will parse the define-products.js file which is available on the SLIDER server.
-// ParseProductsJS can also parse the BackupProductsJS data in the event that the file cannot be retrieved
-// from the SLIDER server.
-func ParseProductsJS(data []byte) (*ProductInventory, error) {
-	s := bytes.Index(data, productsJSPreamble)
-	e := bytes.Index(data, productsJSEnd)
-
-	inventory := new(ProductInventory)
-	err := json.Unmarshal(data[s+len(productsJSPreamble):e+1], inventory)
-	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal products JSON: %w", err)
-	}
-
-	var newSatellites = make(map[string]*Satellite)
-	for satVal, sat := range inventory.Satellites {
-		sat.Value = satVal
-		sat.SatelliteTitle = html.UnescapeString(sat.SatelliteTitle)
-		newSatellites[sat.ID()] = sat
-		var newSectors = make(map[string]*Sector)
-		for sectorVal, sector := range sat.Sectors {
-			sector.Value = sectorVal
-			sector.SectorTitle = html.UnescapeString(sector.SectorTitle)
-			cropSettings := GetCropSettings(sat.ID(), sector.ID())
-			if cropSettings != nil {
-				sector.CropRatioX = cropSettings.RatioX
-				sector.CropRatioY = cropSettings.RatioY
-			}
-			newSectors[sector.ID()] = sector
-		}
-		sat.Sectors = newSectors
-		var newProducts = make(map[string]*Product)
-		for productVal, product := range sat.Products {
-			product.Value = productVal
-			product.ProductTitle = html.UnescapeString(product.ProductTitle)
-			if strings.HasPrefix(product.ProductTitle, "---") {
-				continue
-			}
-			newProducts[product.ID()] = product
-		}
-		sat.Products = newProducts
-	}
-	inventory.Satellites = newSatellites
-	return inventory, nil
-}
-
 // ProductInventory contains all of the product information for SLIDER.
 type ProductInventory struct {
 	NumberOfImagesOptions []int                 `json:"number_of_images_options"`
@@ -136,6 +81,67 @@ type ProductNavigation struct {
 type ProductNavigationDirection struct {
 	Satellite string `json:"satellite"`
 	Sector    string `json:"sector"`
+}
+
+// ProductsJSURL is the address to download the latest product data from.
+const ProductsJSURL = "https://rammb-slider.cira.colostate.edu/js/define-products.js"
+
+// NoProductDownload will disable downloading the latest products from SLIDER.
+var NoProductDownload = false
+
+var latestProductInventory *ProductInventory
+var productsJSPreamble = []byte("{")
+var productsJSEnd = []byte("};")
+
+// ParseProductsJS will parse the define-products.js file which is available on the SLIDER server.
+// ParseProductsJS can also parse the BackupProductsJS data in the event that the file cannot be retrieved
+// from the SLIDER server.
+func ParseProductsJS(data []byte) (*ProductInventory, error) {
+	s := bytes.Index(data, productsJSPreamble)
+	if s == -1 {
+		return nil, fmt.Errorf("unable to find JSON start in define-products.js")
+	}
+	e := bytes.LastIndex(data, productsJSEnd)
+	if e == -1 {
+		return nil, fmt.Errorf("unable to find JSON end in define-products.js")
+	}
+
+	inventory := new(ProductInventory)
+	err := json.Unmarshal(data[s:e+1], inventory)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal products JSON: %w", err)
+	}
+
+	var newSatellites = make(map[string]*Satellite)
+	for satVal, sat := range inventory.Satellites {
+		sat.Value = satVal
+		sat.SatelliteTitle = html.UnescapeString(sat.SatelliteTitle)
+		newSatellites[sat.ID()] = sat
+		var newSectors = make(map[string]*Sector)
+		for sectorVal, sector := range sat.Sectors {
+			sector.Value = sectorVal
+			sector.SectorTitle = html.UnescapeString(sector.SectorTitle)
+			cropSettings := GetCropSettings(sat.ID(), sector.ID())
+			if cropSettings != nil {
+				sector.CropRatioX = cropSettings.RatioX
+				sector.CropRatioY = cropSettings.RatioY
+			}
+			newSectors[sector.ID()] = sector
+		}
+		sat.Sectors = newSectors
+		var newProducts = make(map[string]*Product)
+		for productVal, product := range sat.Products {
+			product.Value = productVal
+			product.ProductTitle = html.UnescapeString(product.ProductTitle)
+			if strings.HasPrefix(product.ProductTitle, "---") {
+				continue
+			}
+			newProducts[product.ID()] = product
+		}
+		sat.Products = newProducts
+	}
+	inventory.Satellites = newSatellites
+	return inventory, nil
 }
 
 // GetProductInventory will download the latest products from SLIDER or return the builtin fail-safe product
