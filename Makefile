@@ -1,4 +1,4 @@
-VERSION := "$(shell git describe --tags --abbrev=0)-$(shell git rev-parse --short HEAD)"
+VERSION := "$(shell git describe --tags | sed 's/\(.*\)-.*/\1/')-$(shell git rev-parse --short HEAD)"
 BUILDTIME := $(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
 
 GOLDFLAGS += -X main.Version=$(VERSION)
