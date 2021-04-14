@@ -1,11 +1,11 @@
-VERSION := "$(shell git describe --tags)-$(shell git rev-parse --short HEAD)"
+VERSION := "$(shell git describe --tags --abbrev=0)-$(shell git rev-parse --short HEAD)"
 BUILDTIME := $(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
 
 GOLDFLAGS += -X main.Version=$(VERSION)
 GOLDFLAGS += -X main.BuildTime=$(BUILDTIME)
 GOFLAGS = -ldflags "$(GOLDFLAGS)"
 
-.PHONY: build release
+.PHONY: build package release
 
 build: clean
 	go build -o slider-cli $(GOFLAGS) .
