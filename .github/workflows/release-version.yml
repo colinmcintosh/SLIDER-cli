@@ -31,7 +31,7 @@ jobs:
         env:
           GOOS: ${{ matrix.platform }}
           GOARCH: ${{ matrix.architecture }}
-        run: make release
+        run: make package
 
       - name: Get release
         id: get-release

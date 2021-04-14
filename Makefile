@@ -24,7 +24,7 @@ lint:
 	gofmt -w .
 	golangci-lint run
 
-release:
+package:
 	mkdir -p release
 	rm -f release/slider-cli release/slider-cli.exe
 ifeq ($(shell go env GOOS), windows)
@@ -35,6 +35,18 @@ else
 	cd release; zip -m "slider-cli-$(shell git describe --tags --abbrev=0)-$(shell go env GOOS)-$(shell go env GOARCH).zip" slider-cli
 endif
 	cd release; sha256sum "slider-cli-$(shell git describe --tags --abbrev=0)-$(shell go env GOOS)-$(shell go env GOARCH).zip" > "slider-cli-$(shell git describe --tags --abbrev=0)-$(shell go env GOOS)-$(shell go env GOARCH).zip.sha256"
+
+release:
+	./tools/release.sh
+
+release-major:
+	./tools/release.sh --major
+
+release-minor:
+	./tools/release.sh --minor
+
+release-patch:
+	./tools/release.sh --patch
 
 sync:
 	go get ./...

@@ -191,7 +191,15 @@ Use the following `make` commands:
 
 `make lint` - run linting and staticcheck
 
-`make release` - build the release .zip and .sha256 files in the `release` folder
+`make package` - build the release .zip and .sha256 files in the `release` folder
+
+`make release` - print the lastest version of `slider-cli` tagged in git
+
+`make release-major` - release a new version by tagging and pushing the next major version number
+
+`make release-minor` - release a new version by tagging and pushing the next minor version number
+
+`make release-patch` - release a new version by tagging and pushing the next patch version number
 
 `make sync` - download Golang dependencies with `go get`
 
