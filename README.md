@@ -41,7 +41,7 @@ SLIDER product.
 
 Head to the [Releases](https://github.com/colinmcintosh/SLIDER-cli/releases)
 page to download the latest version. Or you can build the source code with
-`make build`, which requires Golang and CMake.
+`make build`, which requires Golang and GNU Make.
 
 ## Example Usage
 
