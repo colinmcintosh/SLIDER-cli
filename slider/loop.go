@@ -153,7 +153,7 @@ func getImages(opts *LoopOptions, selectedTimes []time.Time) ([]image.Image, err
 			for x := 0; x < opts.zoom.NumTiles(); x++ {
 				for y := 0; y < opts.zoom.NumTiles(); y++ {
 					imageTileURL := ImageTileURL(&TileImageRequest{
-						Date:           timestamp.Format("20060102"),
+						Date:           timestamp.Format("2006/01/02"),
 						Satellite:      opts.Satellite.Value,
 						Sector:         opts.Sector.Value,
 						Product:        opts.Product.Value,
