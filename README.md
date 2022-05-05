@@ -66,7 +66,7 @@ See the [examples/](examples) folder for more commands and example images, such 
 ## Help Dialog
 
 ```
-slider-cli version v0.5.0-1-g38db1fd-38db1fd (Built 2021-04-13T07:58:02Z)
+slider-cli version v0.5.1-82a0e71 (Built 2022-05-05T05:46:25Z)
 
 Usage:
       --allow-stale        Allow imagery more than a year old -- filtering these images
