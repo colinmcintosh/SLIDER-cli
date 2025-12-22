@@ -18,11 +18,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/colinmcintosh/slider-cli/slider"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 	"image"
 	"os"
 	"os/signal"
@@ -31,6 +26,12 @@ import (
 	"strconv"
 	"syscall"
 	"time"
+
+	"github.com/colinmcintosh/slider-cli/slider"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
 // Version is the built version and is set during build time by GOLDFLAGS.

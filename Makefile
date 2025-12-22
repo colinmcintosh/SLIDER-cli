@@ -54,5 +54,8 @@ sync:
 test:
 	go test ./...
 
+update-define-products:
+	curl -o slider/data/define-products.js https://slider.cira.colostate.edu/js/define-products---rammb-slider.js
+
 usage: build
 	./tools/usage.sh

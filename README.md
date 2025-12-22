@@ -207,4 +207,6 @@ Use the following `make` commands:
 
 `make usage` - update USAGE.md and README.md with the usage text from the `--help` dialog
 
+`make update-define-products` - update the copy of define-products.js stored in this git repo
+
 PRs or Issues welcome!
