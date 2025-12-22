@@ -13,18 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package slider provides functionality for downloading and animating weather satellite imagery.
 package slider
 
 import (
 	"fmt"
-	"github.com/andybons/gogif"
-	"github.com/kettek/apng"
-	"github.com/rs/zerolog/log"
 	"image"
 	"image/gif"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/andybons/gogif"
+	"github.com/kettek/apng"
+	"github.com/rs/zerolog/log"
 )
 
 // LoopStyle is the animation direction of the images, for example forward or backward.
@@ -126,18 +128,23 @@ func AnimatePNG(images []image.Image, delay int, style LoopStyle) (*apng.APNG, e
 	}
 
 	for i, img := range images {
+		// Cap delay to uint16 max value to prevent overflow
+		delayValue := delay
+		if delayValue > 65535 {
+			delayValue = 65535
+		}
 		switch style {
 		case ForwardLoop:
 			animation.Frames[i].Image = img
-			animation.Frames[i].DelayNumerator = uint16(delay)
+			animation.Frames[i].DelayNumerator = uint16(delayValue)
 		case ReverseLoop:
 			animation.Frames[len(images)-1-i].Image = img
-			animation.Frames[len(images)-1-i].DelayNumerator = uint16(delay)
+			animation.Frames[len(images)-1-i].DelayNumerator = uint16(delayValue)
 		case RockLoop:
 			animation.Frames[i].Image = img
-			animation.Frames[i].DelayNumerator = uint16(delay)
+			animation.Frames[i].DelayNumerator = uint16(delayValue)
 			animation.Frames[(len(images)*2)-1-i].Image = img
-			animation.Frames[(len(images)*2)-1-i].DelayNumerator = uint16(delay)
+			animation.Frames[(len(images)*2)-1-i].DelayNumerator = uint16(delayValue)
 		}
 	}
 

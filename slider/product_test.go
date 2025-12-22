@@ -16,18 +16,15 @@
 package slider
 
 import (
-	"github.com/stretchr/testify/require"
-	"io/ioutil"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseProductsJS(t *testing.T) {
-	data, err := ioutil.ReadFile("testdata/define-products.js")
-	require.NoError(t, err)
-	require.NotEmpty(t, data)
-	inventory, err := ParseProductsJS(data)
+	inventory, err := ParseProductsJS(BackupProductsJS)
 	require.NoError(t, err)
 	require.NotNil(t, inventory)
-	require.Len(t, inventory.Satellites, 6)
-	require.Equal(t, "GOES-16 (East; 75.2W)", inventory.Satellites["goes-16"].SatelliteTitle)
+	require.NotEmptyf(t, inventory.Satellites, "list of satellites should not be empty in define-products.js")
+	require.Equal(t, "GOES-19 (East; 75.2W)", inventory.Satellites["goes-19"].SatelliteTitle)
 }

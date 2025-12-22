@@ -48,7 +48,7 @@ page to download the latest version. Or you can build the source code with
 ### CONUS GeoColor
 
 ```bash
-./slider-cli --satellite=goes-16 --sector=conus --product=geocolor -z=2
+./slider-cli --satellite=goes-19 --sector=conus --product=geocolor -z=2
 ```
 
 ![Example CONUS Animation](examples/cira-rammb-slider---goes-16---conus---geocolor---20210407140615-20210407154115.gif)
@@ -56,7 +56,7 @@ page to download the latest version. Or you can build the source code with
 ### Second 2021 Eruption of the La Soufrière volcano on 2021-04-10
 
 ```bash
-./slider-cli -s=goes-16 -c=mesoscale-02 -p=geocolor -i=90 -b=20210410152000 -t=2 --speed=10 --crop=250,250,750,750
+./slider-cli -s=goes-19 -c=mesoscale-02 -p=geocolor -i=90 -b=20210410152000 -t=2 --speed=10 --crop=250,250,750,750
 ```
 
 ![Example MS2 Animation](examples/cira-rammb-slider_goes-16_ms2_geocolor_500x500_20210410151951-20210410181751.gif)
@@ -66,7 +66,7 @@ See the [examples/](examples) folder for more commands and example images, such 
 ## Help Dialog
 
 ```
-slider-cli version v0.5.1-82a0e71 (Built 2022-05-05T05:46:25Z)
+slider-cli version v0.5.1-10-2f31eb2 (Built 2025-12-22T04:39:44Z)
 
 Usage:
       --allow-stale        Allow imagery more than a year old -- filtering these images
@@ -113,9 +113,9 @@ Usage:
 
 Usage Examples:
     ./slider-cli --satellite-list
-    ./slider-cli --sector-list --satellite=goes-16
-    ./slider-cli --satellite=goes-16 --sector=conus --product=band-01 -z=2
-    ./slider-cli --satellite=goes-16 --sector=conus --product=geocolor -i=24 -t=60
+    ./slider-cli --sector-list --satellite=goes-19
+    ./slider-cli --satellite=goes-19 --sector=conus --product=band-01 -z=2
+    ./slider-cli --satellite=goes-19 --sector=conus --product=geocolor -i=24 -t=60
 ```
 
 ## Feature To-Do List
@@ -175,9 +175,9 @@ Usage Examples:
 
 To work on or build `slider-cli` locally you should have:
 
-- Golang 1.14+
+- Golang 1.21+
 - GNU Make 4+
-- golangci-lint (`go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.39.0`)
+- golangci-lint v2+ (`go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest`)
 
 Use the following `make` commands:
 
@@ -206,5 +206,7 @@ Use the following `make` commands:
 `make test` - run the test suite
 
 `make usage` - update USAGE.md and README.md with the usage text from the `--help` dialog
+
+`make update-define-products` - update the copy of define-products.js stored in this git repo
 
 PRs or Issues welcome!
