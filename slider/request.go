@@ -73,7 +73,7 @@ const TileImageURI = "https://rammb-slider.cira.colostate.edu/data/imagery/%s/%s
 //   - Product
 //
 // Example: https://rammb-slider.cira.colostate.edu/data/json/jpss/northern_hemisphere/cira_geocolor/available_dates.json
-const AvailableDatesURI = "https://rammb-slider.cira.colostate.edu/data/json/%s/%s/%s/available_dates.json"
+var AvailableDatesURI = "https://rammb-slider.cira.colostate.edu/data/json/%s/%s/%s/available_dates.json"
 
 // LatestTimesURI is the address for retrieving the latest times for available images.
 //   - Satellite
@@ -81,10 +81,10 @@ const AvailableDatesURI = "https://rammb-slider.cira.colostate.edu/data/json/%s/
 //   - Product
 //
 // Example: https://rammb-slider.cira.colostate.edu/data/json/jpss/northern_hemisphere/cira_geocolor/latest_times.json
-const LatestTimesURI = "https://rammb-slider.cira.colostate.edu/data/json/%s/%s/%s/latest_times.json"
+var LatestTimesURI = "https://rammb-slider.cira.colostate.edu/data/json/%s/%s/%s/latest_times.json"
 
 // LatestTimes5760URI is the same as LatestTimesURI but with more times.
-const LatestTimes5760URI = "https://rammb-slider.cira.colostate.edu/data/json/%s/%s/%s/latest_times_5760.json"
+var LatestTimes5760URI = "https://rammb-slider.cira.colostate.edu/data/json/%s/%s/%s/latest_times_5760.json"
 
 // AvailableDates returns the list of dates that SLIDER has available data for as ints in the form of YYYYMMDD.
 func AvailableDates(satellite *Satellite, sector *Sector, product *Product) ([]int, error) {
