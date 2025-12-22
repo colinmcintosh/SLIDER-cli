@@ -16,13 +16,14 @@
 package slider
 
 import (
-	"github.com/stretchr/testify/require"
-	"io/ioutil"
+	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseProductsJS(t *testing.T) {
-	data, err := ioutil.ReadFile("testdata/define-products.js")
+	data, err := os.ReadFile("testdata/define-products.js")
 	require.NoError(t, err)
 	require.NotEmpty(t, data)
 	inventory, err := ParseProductsJS(data)

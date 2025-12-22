@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"html"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 )
@@ -178,7 +178,7 @@ func DownloadProductsJS() ([]byte, error) {
 		return nil, fmt.Errorf("unable to download define-products.js file: HTTP%d", resp.StatusCode)
 	}
 	defer func() { _ = resp.Body.Close() }()
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read define-products.js response: %w", err)
 	}

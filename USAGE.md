@@ -1,6 +1,6 @@
 
 ```
-slider-cli version v0.5.1-82a0e71 (Built 2022-05-05T05:46:25Z)
+slider-cli version v0.5.1-10-2f31eb2 (Built 2025-12-22T04:39:44Z)
 
 Usage:
       --allow-stale        Allow imagery more than a year old -- filtering these images
@@ -47,8 +47,8 @@ Usage:
 
 Usage Examples:
     ./slider-cli --satellite-list
-    ./slider-cli --sector-list --satellite=goes-16
-    ./slider-cli --satellite=goes-16 --sector=conus --product=band-01 -z=2
-    ./slider-cli --satellite=goes-16 --sector=conus --product=geocolor -i=24 -t=60
+    ./slider-cli --sector-list --satellite=goes-19
+    ./slider-cli --satellite=goes-19 --sector=conus --product=band-01 -z=2
+    ./slider-cli --satellite=goes-19 --sector=conus --product=geocolor -i=24 -t=60
 ```
 

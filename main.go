@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package main provides the slider-cli tool for downloading and animating weather satellite imagery.
 package main
 
 import (
@@ -101,9 +102,9 @@ func helpText(wrapped bool) {
 	}
 	_, _ = fmt.Fprintf(os.Stdout, "\nUsage Examples:\n")
 	_, _ = fmt.Fprintf(os.Stdout, "    ./slider-cli --satellite-list\n")
-	_, _ = fmt.Fprintf(os.Stdout, "    ./slider-cli --sector-list --satellite=goes-16\n")
-	_, _ = fmt.Fprintf(os.Stdout, "    ./slider-cli --satellite=goes-16 --sector=conus --product=band-01 -z=2\n")
-	_, _ = fmt.Fprintf(os.Stdout, "    ./slider-cli --satellite=goes-16 --sector=conus --product=geocolor -i=24 -t=60\n\n")
+	_, _ = fmt.Fprintf(os.Stdout, "    ./slider-cli --sector-list --satellite=goes-19\n")
+	_, _ = fmt.Fprintf(os.Stdout, "    ./slider-cli --satellite=goes-19 --sector=conus --product=band-01 -z=2\n")
+	_, _ = fmt.Fprintf(os.Stdout, "    ./slider-cli --satellite=goes-19 --sector=conus --product=geocolor -i=24 -t=60\n\n")
 }
 
 func loadConfig() (*viper.Viper, error) {
