@@ -24,6 +24,17 @@
         <p class="subtitle">Animated satellite imagery</p>
       </header>
 
+      <section class="playback">
+        <div class="play-row">
+          <button id="play" type="button">Play</button>
+          <select id="loop-style" aria-label="Loop style">
+            <option value="forward">Forward</option>
+            <option value="reverse">Reverse</option>
+            <option value="rock">Rock</option>
+          </select>
+        </div>
+      </section>
+
       <!-- Frame scrubber + step buttons. -->
       <section class="scrubber-bar">
         <input id="scrubber" type="range" min="0" max="100" value="100"
@@ -76,17 +87,6 @@
 
         <label for="rotation">Rotation <span id="rotation-label"></span></label>
         <input id="rotation" type="range" min="-180" max="180" step="15" value="0" />
-      </section>
-
-      <section class="playback">
-        <div class="play-row">
-          <button id="play" type="button">Play</button>
-          <select id="loop-style" aria-label="Loop style">
-            <option value="forward">Forward</option>
-            <option value="reverse">Reverse</option>
-            <option value="rock">Rock</option>
-          </select>
-        </div>
       </section>
 
       <!-- Layers & overlays (mocked) ------------------------------------------ -->
