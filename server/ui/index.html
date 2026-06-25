@@ -3,14 +3,16 @@
   Copyright (c) 2021 Colin McIntosh
   Licensed under the Apache License, Version 2.0.
 
-  A new, independent clone of the SLIDER web UI (https://slider.cira.colostate.edu/).
-  This is original markup built on Leaflet; no HTML/JS was copied from the public site.
+  Swath — an independent, third-party viewer for publicly available satellite imagery.
+  Original markup built on Leaflet; no HTML/JS was copied from any other site, and this
+  project is not affiliated with or endorsed by CIRA, RAMMB, NOAA, NWS, or CSU.
 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>SLIDER &middot; Satellite Loop Viewer</title>
+  <title>Swath &middot; Animated satellite imagery</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b0f17'/%3E%3Cpath d='M5 21 Q16 9 27 21' fill='none' stroke='%233fa7ff' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='8' r='2.5' fill='%23e6edf3'/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
   <link rel="stylesheet" href="/style.css" />
 </head>
@@ -18,8 +20,8 @@
   <div id="app">
     <aside id="panel">
       <header>
-        <h1>SLIDER</h1>
-        <p class="subtitle">Satellite Loop Viewer</p>
+        <h1>Swath</h1>
+        <p class="subtitle">Animated satellite imagery</p>
       </header>
 
       <section class="controls">
@@ -64,7 +66,14 @@
       </section>
 
       <footer>
-        <a href="https://rammb-slider.cira.colostate.edu/" target="_blank" rel="noopener">Imagery &copy; CIRA/RAMMB</a>
+        <p class="attribution">
+          Satellite imagery courtesy of
+          <a href="https://rammb-slider.cira.colostate.edu/" target="_blank" rel="noopener">CIRA/RAMMB</a>.
+        </p>
+        <p class="disclaimer">
+          An independent project. Not affiliated with or endorsed by CIRA, RAMMB,
+          NOAA, NWS, or Colorado State University.
+        </p>
       </footer>
     </aside>
 
