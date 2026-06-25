@@ -19,6 +19,9 @@
     rotation: document.getElementById("rotation"),
     rotationLabel: document.getElementById("rotation-label"),
     autoRefresh: document.getElementById("auto-refresh"),
+    scrubber: document.getElementById("scrubber"),
+    prev: document.getElementById("prev"),
+    next: document.getElementById("next"),
     play: document.getElementById("play"),
     maxZoom: document.getElementById("max-zoom"),
     zoomIn: document.getElementById("zoom-in"),
@@ -209,6 +212,7 @@
     frameLayers = [];
     timestamps = [];
     frameIndex = 0;
+    syncScrubber();
     scheduleMemoryUpdate();
     updateLoadingIndicator();
   }
@@ -284,6 +288,27 @@
     });
     frameIndex = clamped;
     els.timestamp.textContent = formatTimestamp(timestamps[clamped]);
+    syncScrubber();
+  }
+
+  // syncScrubber keeps the frame slider's range/thumb in step with frameLayers/frameIndex, and disables
+  // the scrubber and Prev/Next when there's nothing to animate (≤1 frame), mirroring the Play button.
+  function syncScrubber() {
+    var n = frameLayers.length;
+    els.scrubber.max = String(Math.max(0, n - 1));
+    els.scrubber.value = String(frameIndex);
+    var disabled = n <= 1;
+    els.scrubber.disabled = disabled;
+    els.prev.disabled = disabled;
+    els.next.disabled = disabled;
+  }
+
+  // step moves the displayed frame by delta (wrapping like the loop) and pauses playback, for Prev/Next.
+  function step(delta) {
+    stop();
+    var n = frameLayers.length;
+    if (n <= 1) return;
+    showFrame((frameIndex + delta + n) % n);
   }
 
   function formatTimestamp(ts) {
@@ -845,6 +870,9 @@
       if (els.autoRefresh.checked) startAutoRefresh();
       else stopAutoRefresh();
     });
+    els.scrubber.addEventListener("input", function () { stop(); showFrame(Number(els.scrubber.value)); });
+    els.prev.addEventListener("click", function () { step(-1); });
+    els.next.addEventListener("click", function () { step(1); });
     els.play.addEventListener("click", togglePlay);
     els.maxZoom.addEventListener("click", function (ev) {
       ev.stopPropagation();

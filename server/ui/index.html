@@ -24,17 +24,17 @@
         <p class="subtitle">Animated satellite imagery</p>
       </header>
 
-      <!-- Frame scrubber + step buttons are mocked (no behavior wired yet). -->
+      <!-- Frame scrubber + step buttons. -->
       <section class="scrubber-bar">
-        <input id="scrubber" class="mock" type="range" min="0" max="100" value="100"
-               title="Mock — not yet wired" aria-label="Frame scrubber" />
+        <input id="scrubber" type="range" min="0" max="100" value="100"
+               aria-label="Frame scrubber" />
         <div class="btn-row">
           <!-- Auto-refresh styled as a toggle button (the checkbox stays for the app.js wiring). -->
           <label class="btn toggle" title="Auto-refresh">
             <input id="auto-refresh" type="checkbox" /> Auto &#8635;
           </label>
-          <button class="btn mock" type="button" title="Mock — not yet wired">&#9664; Prev</button>
-          <button class="btn mock" type="button" title="Mock — not yet wired">Next &#9654;</button>
+          <button id="prev" class="btn" type="button" title="Previous frame">&#9664; Prev</button>
+          <button id="next" class="btn" type="button" title="Next frame">Next &#9654;</button>
         </div>
       </section>
 
