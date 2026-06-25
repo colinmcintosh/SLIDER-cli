@@ -1,4 +1,15 @@
 services:
+  # One-shot init: bind mounts keep the host directory's ownership, so the
+  # non-root slider user (UID 65532) can't write to ./cache by default. This
+  # runs as root once to chown the mounted dir (which, being a bind mount, also
+  # updates the host inode), then exits. The slider service waits for it.
+  cache-init:
+    image: busybox:1.36
+    command: ["chown", "-R", "65532:65532", "/data/cache"]
+    volumes:
+      - ./cache:/data/cache
+    restart: "no"
+
   slider:
     build:
       context: .
@@ -6,11 +17,14 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      # Durable host path for the tile cache. Replace ./cache-data with any
-      # absolute host path you want the cache persisted to. The directory must
-      # be writable by UID 65532 (the container's non-root user).
+      # Durable host path for the tile cache. Replace ./cache with any host path
+      # you want the cache persisted to; cache-init makes it writable by the
+      # container's non-root user (UID 65532).
       - ./cache:/data/cache
     # Run as the image's built-in non-root user so writes to the bind-mounted
-    # host directory succeed.
+    # host directory succeed (after cache-init has fixed its ownership).
     user: "65532:65532"
+    depends_on:
+      cache-init:
+        condition: service_completed_successfully
     restart: unless-stopped
