@@ -63,6 +63,32 @@ page to download the latest version. Or you can build the source code with
 
 See the [examples/](examples) folder for more commands and example images, such as animated PNGs.
 
+## Web Interface
+
+In addition to the one-shot CLI, `slider-cli` ships with a built-in web server that hosts an
+interactive viewer — a fast, original clone of the [SLIDER](https://slider.cira.colostate.edu/)
+web UI. Start it with the `serve` subcommand:
+
+```bash
+./slider-cli serve
+```
+
+Then open <http://127.0.0.1:8080> in your browser. Select a satellite, sector, and product,
+then press **Play** to animate the latest imagery. Pan and zoom with the mouse.
+
+The server proxies image tiles from SLIDER through a local API and caches every tile on first
+retrieval, so panning and replaying loops is fast and works offline once cached. Caching is
+enabled by default for the whole tool (in `./cache`); use `--no-cache` to disable it.
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--port` | `8080` | Port for the web server to listen on. |
+| `--listen` | `127.0.0.1` | Address to bind to (use `0.0.0.0` to expose on the network). |
+| `--cache` | `./cache` | Directory to cache downloaded tiles in. |
+| `--no-cache` | | Disable the local tile cache. |
+
+The UI and its dependencies are embedded in the binary, so no extra files are required to run it.
+
 ## Help Dialog
 
 ```

@@ -17,6 +17,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/colinmcintosh/slider-cli/server"
 	"github.com/colinmcintosh/slider-cli/slider"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -75,8 +76,11 @@ func parseFlags() {
 	_ = pflag.CommandLine.MarkHidden("help-wrapped")
 	pflag.BoolP("verbose", "v", false, "Enable verbose output.")
 	pflag.BoolP("version", "V", false, "Print version and exit.")
-	pflag.String("cache", "", "Directory to cache downloaded images in. Caching will not be used if "+
-		"a cache directory is not provided.")
+	pflag.String("cache", "./cache", "Directory to cache downloaded images in. Caching is enabled by "+
+		"default; use --no-cache to disable it.")
+	pflag.Bool("no-cache", false, "Disable the local image cache.")
+	pflag.Int("port", 8080, "Port for the web server to listen on. (serve)")
+	pflag.String("listen", "127.0.0.1", "Address for the web server to bind to. (serve)")
 	pflag.StringP("dir", "d", ".", "Output filename to save rendered animation in.")
 	pflag.StringP("output", "o", "", "Output filename to save rendered animation in. "+
 		"(default auto-generated)")
@@ -103,7 +107,8 @@ func helpText(wrapped bool) {
 	_, _ = fmt.Fprintf(os.Stdout, "    ./slider-cli --satellite-list\n")
 	_, _ = fmt.Fprintf(os.Stdout, "    ./slider-cli --sector-list --satellite=goes-16\n")
 	_, _ = fmt.Fprintf(os.Stdout, "    ./slider-cli --satellite=goes-16 --sector=conus --product=band-01 -z=2\n")
-	_, _ = fmt.Fprintf(os.Stdout, "    ./slider-cli --satellite=goes-16 --sector=conus --product=geocolor -i=24 -t=60\n\n")
+	_, _ = fmt.Fprintf(os.Stdout, "    ./slider-cli --satellite=goes-16 --sector=conus --product=geocolor -i=24 -t=60\n")
+	_, _ = fmt.Fprintf(os.Stdout, "    ./slider-cli serve --port=8080\n\n")
 }
 
 func loadConfig() (*viper.Viper, error) {
@@ -128,6 +133,13 @@ func main() {
 	}
 	log.Logger = log.Output(writer)
 	zerolog.SetGlobalLevel(zerolog.WarnLevel)
+
+	// Detect the "serve" subcommand and remove it from the arguments so the remaining flags parse normally.
+	serveMode := false
+	if len(os.Args) > 1 && os.Args[1] == "serve" {
+		serveMode = true
+		os.Args = append(os.Args[:1], os.Args[2:]...)
+	}
 
 	var deferred []func()
 	c := make(chan os.Signal, 2)
@@ -162,7 +174,38 @@ func main() {
 		os.Exit(0)
 	}
 
+	if serveMode {
+		runServer(config)
+		return
+	}
+
 	handleFlags(config)
+}
+
+// resolveCacheDir returns the configured cache directory, or an empty string when caching has been disabled
+// via --no-cache.
+func resolveCacheDir(config *viper.Viper) string {
+	if config.GetBool("no-cache") {
+		return ""
+	}
+	return config.GetString("cache")
+}
+
+// runServer starts the web server for the "serve" subcommand and blocks until it exits.
+func runServer(config *viper.Viper) {
+	cacheDir := resolveCacheDir(config)
+	srv, err := server.New(cacheDir)
+	if err != nil {
+		log.Fatal().Msgf("unable to start server: %v", err)
+	}
+	addr := fmt.Sprintf("%s:%d", config.GetString("listen"), config.GetInt("port"))
+	fmt.Printf("Starting SLIDER web UI at http://%s\n", addr)
+	if cacheDir != "" {
+		fmt.Printf("Caching tiles in %s\n", cacheDir)
+	}
+	if err := srv.ListenAndServe(addr); err != nil {
+		log.Fatal().Msgf("server error: %v", err)
+	}
 }
 
 //gocyclo:ignore
@@ -380,7 +423,7 @@ func handleFlags(config *viper.Viper) {
 		TimeStep:        config.GetInt("time-step"),
 		BeginTime:       beginTime,
 		EndTime:         endTime,
-		CacheDirectory:  config.GetString("cache"),
+		CacheDirectory:  resolveCacheDir(config),
 		OutputDirectory: config.GetString("dir"),
 		FileFormat:      fileFormat,
 	})

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<!--
+  Copyright (c) 2021 Colin McIntosh
+  Licensed under the Apache License, Version 2.0.
+
+  A new, independent clone of the SLIDER web UI (https://slider.cira.colostate.edu/).
+  This is original markup built on Leaflet; no HTML/JS was copied from the public site.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>SLIDER &middot; Satellite Loop Viewer</title>
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div id="app">
+    <aside id="panel">
+      <header>
+        <h1>SLIDER</h1>
+        <p class="subtitle">Satellite Loop Viewer</p>
+      </header>
+
+      <section class="controls">
+        <label for="satellite">Satellite</label>
+        <select id="satellite"></select>
+
+        <label for="sector">Sector</label>
+        <select id="sector"></select>
+
+        <label for="product">Product</label>
+        <select id="product"></select>
+
+        <div class="row">
+          <div class="col">
+            <label for="frames">Frames</label>
+            <input id="frames" type="number" min="1" max="100" value="24" />
+          </div>
+          <div class="col">
+            <label for="step">Step</label>
+            <input id="step" type="number" min="1" max="30" value="1" />
+          </div>
+        </div>
+
+        <label for="loop-style">Loop</label>
+        <select id="loop-style">
+          <option value="forward">Forward</option>
+          <option value="reverse">Reverse</option>
+          <option value="rock">Rock</option>
+        </select>
+
+        <label for="speed">Speed <span id="speed-label"></span></label>
+        <input id="speed" type="range" min="30" max="600" step="10" value="150" />
+      </section>
+
+      <section class="playback">
+        <button id="play" type="button">Play</button>
+        <div id="status" class="status">Loading&hellip;</div>
+        <div id="timestamp" class="timestamp"></div>
+      </section>
+
+      <footer>
+        <a href="https://rammb-slider.cira.colostate.edu/" target="_blank" rel="noopener">Imagery &copy; CIRA/RAMMB</a>
+      </footer>
+    </aside>
+
+    <main id="map"></main>
+  </div>
+
+  <script src="/vendor/leaflet/leaflet.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

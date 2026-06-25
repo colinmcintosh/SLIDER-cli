@@ -16,9 +16,11 @@
 package slider
 
 import (
+	"path/filepath"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestURLToFilePath(t *testing.T) {
@@ -27,4 +29,37 @@ func TestURLToFilePath(t *testing.T) {
 	got, err := URLToFilePath(url)
 	require.NoError(t, err)
 	assert.Equal(t, expected, got)
+}
+
+func TestGetWriteBytesRoundTrip(t *testing.T) {
+	cache := &ImageCache{Dir: t.TempDir()}
+	const key = "rammb-slider.cira.colostate.edu/data/imagery/a/b/c/000_000.png"
+	want := []byte("not really a png, but raw bytes are preserved")
+
+	// Miss before write.
+	got, err := cache.GetBytes(key)
+	require.NoError(t, err)
+	assert.Nil(t, got)
+
+	require.NoError(t, cache.WriteBytes(key, want))
+
+	got, err = cache.GetBytes(key)
+	require.NoError(t, err)
+	assert.Equal(t, want, got)
+}
+
+func TestWriteBytesCreatesDirsAndIsAtomic(t *testing.T) {
+	dir := t.TempDir()
+	cache := &ImageCache{Dir: dir}
+	const key = "deep/nested/path/tile.png"
+	require.NoError(t, cache.WriteBytes(key, []byte("data")))
+
+	// File exists at the expected location and no leftover temp files remain in its directory.
+	matches, err := filepath.Glob(filepath.Join(dir, "deep", "nested", "path", ".tmp-*"))
+	require.NoError(t, err)
+	assert.Empty(t, matches, "temporary files should be renamed away")
+
+	got, err := cache.GetBytes(key)
+	require.NoError(t, err)
+	assert.Equal(t, []byte("data"), got)
 }

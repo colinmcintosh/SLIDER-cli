@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"image"
 	"image/png"
+	"io/ioutil"
 	"net/url"
 	"os"
 	"path"
@@ -57,6 +58,53 @@ func (c *ImageCache) Get(filePath string) (image.Image, error) {
 		return nil, fmt.Errorf("unknown file type for image cache file: %s: %s", fullPath, fileType)
 	}
 	return im, err
+}
+
+// GetBytes returns the raw bytes stored in Dir at filePath, or (nil, nil) if that filePath doesn't exist.
+// Unlike Get, GetBytes does not decode the image, making it suitable for proxying files (e.g. tiles) without
+// the CPU cost of decoding and re-encoding.
+func (c *ImageCache) GetBytes(filePath string) ([]byte, error) {
+	fullPath := path.Join(c.Dir, filePath)
+	data, err := ioutil.ReadFile(fullPath)
+	if errors.Is(err, os.ErrNotExist) {
+		// No error and no data means the item isn't "present" in the cache.
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("unable to read bytes from cache file: %s: %w", fullPath, err)
+	}
+	return data, nil
+}
+
+// WriteBytes stores raw bytes at filePath, creating any missing directories. The write is atomic: data is
+// written to a temporary file and then renamed into place so readers never observe a partially-written file.
+func (c *ImageCache) WriteBytes(filePath string, data []byte) error {
+	fullPath := path.Join(c.Dir, filePath)
+	dir := path.Dir(fullPath)
+	err := os.MkdirAll(dir, 0750)
+	if err != nil {
+		return fmt.Errorf("unable to create path for cache: %s: %w", fullPath, err)
+	}
+
+	tmp, err := ioutil.TempFile(dir, ".tmp-*")
+	if err != nil {
+		return fmt.Errorf("unable to create temp cache file: %s: %w", fullPath, err)
+	}
+	tmpName := tmp.Name()
+	if _, err = tmp.Write(data); err != nil {
+		_ = tmp.Close()
+		_ = os.Remove(tmpName)
+		return fmt.Errorf("unable to write temp cache file: %s: %w", tmpName, err)
+	}
+	if err = tmp.Close(); err != nil {
+		_ = os.Remove(tmpName)
+		return fmt.Errorf("unable to close temp cache file: %s: %w", tmpName, err)
+	}
+	if err = os.Rename(tmpName, fullPath); err != nil {
+		_ = os.Remove(tmpName)
+		return fmt.Errorf("unable to move temp cache file into place: %s: %w", fullPath, err)
+	}
+	return nil
 }
 
 // Delete will delete the image in Dir at filePath. No error will be returned if the file doesn't exist.
