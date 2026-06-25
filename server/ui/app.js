@@ -13,6 +13,10 @@
     product: document.getElementById("product"),
     frames: document.getElementById("frames"),
     step: document.getElementById("step"),
+    beginDate: document.getElementById("begin-date"),
+    beginTime: document.getElementById("begin-time"),
+    endDate: document.getElementById("end-date"),
+    endTime: document.getElementById("end-time"),
     loopStyle: document.getElementById("loop-style"),
     speed: document.getElementById("speed"),
     speedLabel: document.getElementById("speed-label"),
@@ -55,6 +59,14 @@
   var refreshTimer = null; // setInterval handle for auto-refresh polling; null when off
   var rotation = 0; // current view rotation in degrees (applied to the map container via CSS transform)
   var maxZoomArmed = false; // true while the Max Zoom button awaits a click on the map to pick the target
+  var tzOffsetMinutes = 0; // Begin/End fields are interpreted as UTC; a future time-zone selector sets this.
+  var framesBeforeRange = ""; // remembered Frames value while a full Begin+End range disables that field
+
+  // RANGE_WINDOW is the upstream timestamp window to pull when a Begin/End bound is active (the server
+  // switches to latest_times_5760.json above 100), so we can filter to an arbitrary historical range
+  // client-side. MAX_RANGE_FRAMES caps how many layers a Begin+End range may build (memory guard).
+  var RANGE_WINDOW = 5760;
+  var MAX_RANGE_FRAMES = 300;
 
   function pad(n, width) {
     var s = String(n);
@@ -124,6 +136,75 @@
     );
   }
 
+  // fieldToStamp combines a <input type=date> + <input type=time> pair into a 14-digit YYYYMMDDhhmmss bound,
+  // or null when the date is empty. A missing time defaults to the start of the day for Begin and the end of
+  // the day for End, so a date-only bound is inclusive. This is the ONLY place wall-clock fields become a
+  // UTC stamp: the entered values are treated as UTC shifted by tzOffsetMinutes (0 today), so a future
+  // time-zone selector only needs to set that offset.
+  function fieldToStamp(dateEl, timeEl, isEnd) {
+    var date = dateEl.value; // "YYYY-MM-DD"
+    if (!date) return null;
+    var time = timeEl.value || (isEnd ? "23:59" : "00:00"); // "HH:MM"
+    var sec = isEnd ? 59 : 0;
+    var ms = Date.parse(date + "T" + time + ":00Z");
+    if (isNaN(ms)) return null;
+    ms += sec * 1000 - tzOffsetMinutes * 60000;
+    var d = new Date(ms);
+    return (
+      pad(d.getUTCFullYear(), 4) + pad(d.getUTCMonth() + 1, 2) + pad(d.getUTCDate(), 2) +
+      pad(d.getUTCHours(), 2) + pad(d.getUTCMinutes(), 2) + pad(d.getUTCSeconds(), 2)
+    );
+  }
+
+  // stampToFields is the inverse of fieldToStamp: it populates a date/time input pair from a 14-digit UTC
+  // stamp (used when restoring Begin/End from the URL), applying the same time-zone offset seam.
+  function stampToFields(ts, dateEl, timeEl) {
+    var d = new Date(parseTimestamp(ts) + tzOffsetMinutes * 60000);
+    dateEl.value = pad(d.getUTCFullYear(), 4) + "-" + pad(d.getUTCMonth() + 1, 2) + "-" + pad(d.getUTCDate(), 2);
+    timeEl.value = pad(d.getUTCHours(), 2) + ":" + pad(d.getUTCMinutes(), 2);
+  }
+
+  // rangeBounds reads the Begin/End fields into optional 14-digit string bounds for the loop's time window.
+  function rangeBounds() {
+    return {
+      beginTS: fieldToStamp(els.beginDate, els.beginTime, false),
+      endTS: fieldToStamp(els.endDate, els.endTime, true),
+    };
+  }
+
+  // pickFrames selects the frames to display from an ascending in-range timestamp list, honouring the
+  // Begin/End rules: Begin-only counts forward from the start, End-only (and the no-bounds default) counts
+  // backward from the newest, and Begin+End takes the whole range subsampled by step (capped for memory).
+  function pickFrames(inRangeAsc, frames, step, b) {
+    var picked = [];
+    var i;
+    if (b.beginTS && b.endTS) {
+      for (i = inRangeAsc.length - 1; i >= 0; i -= step) picked.unshift(inRangeAsc[i]);
+      if (picked.length > MAX_RANGE_FRAMES) picked = picked.slice(picked.length - MAX_RANGE_FRAMES);
+    } else if (b.beginTS) {
+      for (i = 0; i < inRangeAsc.length && picked.length < frames; i += step) picked.push(inRangeAsc[i]);
+    } else {
+      for (i = inRangeAsc.length - 1; i >= 0 && picked.length < frames; i -= step) picked.unshift(inRangeAsc[i]);
+    }
+    return picked;
+  }
+
+  // updateRangeState couples the Begin/End fields to the Frames count: when BOTH bounds are set the frame
+  // count is derived from the range + step, so the Frames field is emptied and disabled; otherwise it is
+  // restored to its remembered value. Returns true while a full Begin+End range is active.
+  function updateRangeState() {
+    var both = !!(els.beginDate.value && els.endDate.value);
+    if (both) {
+      if (!els.frames.disabled) framesBeforeRange = els.frames.value;
+      els.frames.value = "";
+      els.frames.disabled = true;
+    } else if (els.frames.disabled) {
+      els.frames.disabled = false;
+      if (!els.frames.value) els.frames.value = framesBeforeRange || "24";
+    }
+    return both;
+  }
+
   // computeBaseMinutes derives the native cadence (minutes between consecutive images) from a chronologically
   // sorted list of timestamps, using the smallest positive gap. Returns 0 if it can't be determined.
   function computeBaseMinutes(sorted) {
@@ -163,12 +244,13 @@
     }
   }
 
-  // updateDuration shows the total loop length: frames × the per-step interval, in minutes.
-  function updateDuration() {
+  // updateDuration shows the total loop length: frames × the per-step interval, in minutes. The frame count
+  // can be passed explicitly (used in Begin+End mode, where it's derived from the range, not the Frames field).
+  function updateDuration(explicitFrames) {
     if (!els.duration) return;
-    var frames = Math.max(1, Number(els.frames.value) || 0);
+    var frames = explicitFrames != null ? explicitFrames : Math.max(1, Number(els.frames.value) || 0);
     var mult = Math.max(1, Number(els.step.value) || 1);
-    if (baseMinutes <= 0) { els.duration.textContent = ""; return; }
+    if (baseMinutes <= 0 || frames <= 0) { els.duration.textContent = ""; return; }
     var minutes = frames * mult * baseMinutes;
     els.duration.textContent = "Loop length: " + formatDuration(minutes);
   }
@@ -366,9 +448,12 @@
     if (!sel) return;
 
     var token = ++loadToken;
+    var bounds = rangeBounds();
     var frames = Math.max(1, Math.min(100, Number(els.frames.value) || 24));
     var step = Math.max(1, Math.min(96, Number(els.step.value) || 1));
-    var need = frames * step;
+    // With a Begin/End bound active we must look across an arbitrary historical window and filter it
+    // client-side; otherwise just the most recent `frames × step` images are enough.
+    var need = bounds.beginTS || bounds.endTS ? RANGE_WINDOW : frames * step;
     var wasPlaying = playing; // restore playback after the rebuild (e.g. an auto-refresh)
 
     setStatus("Loading…");
@@ -395,20 +480,24 @@
         currentCfg = cfg;
         var all = (data.timestamps_int || []).map(function (n) { return String(n); });
         all.sort(); // chronological (zero-padded fixed-width strings sort lexically)
-        // Take the most recent `need`, subsample by `step`, keep chronological order.
-        var recent = all.slice(Math.max(0, all.length - need));
-        // Derive the product's native cadence and relabel the time-step options in minutes.
-        baseMinutes = computeBaseMinutes(recent) || baseMinutes;
+        // Restrict to the selected [Begin, End] window (each bound optional). An inverted range (Begin
+        // after End) simply yields nothing, handled by the empty-`picked` guard below.
+        var inRange = all.filter(function (ts) {
+          return (!bounds.beginTS || ts >= bounds.beginTS) && (!bounds.endTS || ts <= bounds.endTS);
+        });
+        // Derive the product's native cadence from the in-range images and relabel the step options.
+        baseMinutes = computeBaseMinutes(inRange) || baseMinutes;
         populateStepOptions();
-        updateDuration();
-        var picked = [];
-        for (var i = recent.length - 1; i >= 0 && picked.length < frames; i -= step) {
-          picked.unshift(recent[i]);
-        }
+        var picked = pickFrames(inRange, frames, step, bounds);
         if (!picked.length) {
-          setStatus("No imagery available for this selection.");
+          setStatus(bounds.beginTS || bounds.endTS
+            ? "No imagery available in the selected time range."
+            : "No imagery available for this selection.");
           return;
         }
+        // The visible loop length follows the frames we actually built (matters in Begin+End mode, where
+        // the count is derived from the range rather than the Frames field).
+        updateDuration(picked.length);
 
         clearFrames();
         timestamps = picked;
@@ -443,7 +532,9 @@
 
         showFrame(frameLayers.length - 1); // start on the most recent frame
         els.play.disabled = frameLayers.length <= 1;
-        setStatus(frameLayers.length + " frames · zoom 0–" + cfg.nativeMax);
+        // In Begin+End mode the range can exceed the layer cap; note when the newest frames were kept.
+        var capped = bounds.beginTS && bounds.endTS && Math.ceil(inRange.length / step) > MAX_RANGE_FRAMES;
+        setStatus(frameLayers.length + " frames" + (capped ? " (capped)" : "") + " · zoom 0–" + cfg.nativeMax);
         updateLoadingIndicator();
 
         if (pendingView) {
@@ -487,6 +578,8 @@
   function checkForNewImagery() {
     var sel = currentSelection();
     if (!sel) return;
+    // A loop pinned to an explicit End is bounded in time, so newer upstream imagery is irrelevant.
+    if (rangeBounds().endTS) return;
     fetch("/api/times?" + selectionQS(sel) + "&count=1")
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
@@ -655,8 +748,10 @@
     q.set("z", map ? String(Math.round(map.getZoom())) : "0");
     q.set("im", String(Math.max(1, Math.min(100, Number(els.frames.value) || 24))));
     q.set("ts", String(Math.max(1, Math.min(96, Number(els.step.value) || 1))));
-    q.set("st", "0");
-    q.set("et", "0");
+    // Persist the Begin/End window in the reserved st/et slots as 14-digit UTC stamps (0 when unset).
+    var bounds = rangeBounds();
+    q.set("st", bounds.beginTS || "0");
+    q.set("et", bounds.endTS || "0");
     q.set("speed", String(Number(els.speed.value)));
     q.set("motion", styleToMotion(els.loopStyle.value));
     q.set("angle", String(rotation));
@@ -689,7 +784,12 @@
       var exists = Array.prototype.some.call(els.product.options, function (o) { return o.value === prodID; });
       if (prodID && exists) els.product.value = prodID;
     }
-    if (p.has("im")) {
+    // Restore the Begin/End window from st/et (14-digit UTC stamps; "0" or absent means unset) before the
+    // frame-count logic, so updateRangeState() can disable the Frames field when both bounds are present.
+    if (/^\d{14}$/.test(p.get("st") || "")) stampToFields(p.get("st"), els.beginDate, els.beginTime);
+    if (/^\d{14}$/.test(p.get("et") || "")) stampToFields(p.get("et"), els.endDate, els.endTime);
+    updateRangeState();
+    if (p.has("im") && !els.frames.disabled) {
       var im = parseInt(p.get("im"), 10);
       if (im > 0) els.frames.value = Math.min(100, im);
     }
@@ -859,6 +959,10 @@
     els.product.addEventListener("change", loadFrames);
     els.frames.addEventListener("change", function () { updateDuration(); loadFrames(); });
     els.step.addEventListener("change", function () { updateDuration(); loadFrames(); });
+    // Begin/End fields: recouple the Frames count, refresh the loop-length hint, and reload the window.
+    [els.beginDate, els.beginTime, els.endDate, els.endTime].forEach(function (el) {
+      el.addEventListener("change", function () { updateRangeState(); updateDuration(); loadFrames(); });
+    });
     els.speed.addEventListener("input", updateSpeedLabel);
     els.speed.addEventListener("change", updateURL);
     els.rotation.addEventListener("input", function () { applyRotation(Number(els.rotation.value)); });
