@@ -19,6 +19,7 @@
     play: document.getElementById("play"),
     status: document.getElementById("status"),
     timestamp: document.getElementById("timestamp"),
+    memory: document.getElementById("memory"),
   };
 
   // A 1x1 fully-transparent PNG, used for tiles that don't exist (cropped sector regions).
@@ -37,6 +38,7 @@
   var pendingView = null; // {z,x,y} parsed from the URL, applied once frames are built
   var coordBaseZoom = 0; // zoom level whose pixel grid the x/y params are expressed in (SLIDER convention)
   var suspendURLSync = false; // true while applying URL params, to avoid clobbering the URL
+  var memoryRAF = false; // requestAnimationFrame coalescing flag for the memory estimate
 
   function pad(n, width) {
     var s = String(n);
@@ -50,6 +52,45 @@
 
   function setStatus(text) {
     els.status.textContent = text || "";
+  }
+
+  function formatBytes(bytes) {
+    if (bytes >= 1024 * 1024 * 1024) return (bytes / (1024 * 1024 * 1024)).toFixed(1) + " GB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  }
+
+  // scheduleMemoryUpdate coalesces frequent triggers (tile load/unload, pan/zoom) into one update per frame.
+  function scheduleMemoryUpdate() {
+    if (memoryRAF) return;
+    memoryRAF = true;
+    requestAnimationFrame(function () {
+      memoryRAF = false;
+      updateMemory();
+    });
+  }
+
+  // updateMemory estimates the page's memory footprint. The dominant cost is decoded tile bitmaps (one layer
+  // per animation frame); we sum the actual pixel dimensions of every loaded tile (W*H*4 bytes, RGBA), which
+  // also makes transparent error tiles in cropped sectors self-correct to ~0. The JS heap is appended when
+  // the browser exposes performance.memory (Chrome/Edge only).
+  function updateMemory() {
+    if (!els.memory) return;
+    var bytes = 0;
+    var count = 0;
+    if (map) {
+      var imgs = map.getContainer().querySelectorAll("img.leaflet-tile-loaded");
+      Array.prototype.forEach.call(imgs, function (im) {
+        if (im.naturalWidth > 1) {
+          bytes += im.naturalWidth * im.naturalHeight * 4;
+          count += 1;
+        }
+      });
+    }
+    var text = "Memory: ~" + formatBytes(bytes) + " · " + count + (count === 1 ? " tile" : " tiles");
+    if (window.performance && performance.memory && performance.memory.usedJSHeapSize) {
+      text += " · JS heap " + formatBytes(performance.memory.usedJSHeapSize);
+    }
+    els.memory.textContent = text;
   }
 
   // A tile layer bound to one timestamp. getTileUrl emits a path the proxy validates and caches.
@@ -71,6 +112,7 @@
     frameLayers = [];
     timestamps = [];
     frameIndex = 0;
+    scheduleMemoryUpdate();
   }
 
   function currentSelection() {
@@ -107,6 +149,7 @@
       });
       window.sliderMap = map; // exposed for debugging/automation
       map.on("moveend zoomend", updateURL);
+      map.on("tileload tileunload load zoomend moveend", scheduleMemoryUpdate);
     }
     map.setMinZoom(0);
     map.setMaxZoom(overMax);
@@ -504,6 +547,9 @@
     els.speed.addEventListener("change", updateURL);
     els.loopStyle.addEventListener("change", function () { rockDir = 1; updateURL(); });
     els.play.addEventListener("click", togglePlay);
+
+    // Refresh the estimate periodically so the JS-heap figure stays current while the page is idle.
+    setInterval(scheduleMemoryUpdate, 2000);
 
     fetch("/api/inventory")
       .then(function (r) { return r.json(); })

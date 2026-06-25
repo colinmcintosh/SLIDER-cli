@@ -133,6 +133,14 @@ input[type="range"] {
   color: var(--text);
 }
 
+.memory {
+  margin-top: 6px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  min-height: 14px;
+}
+
 #panel footer {
   margin-top: auto;
   padding-top: 14px;
