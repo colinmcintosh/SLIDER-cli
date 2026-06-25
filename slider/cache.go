@@ -81,7 +81,7 @@ func (c *ImageCache) GetBytes(filePath string) ([]byte, error) {
 func (c *ImageCache) WriteBytes(filePath string, data []byte) error {
 	fullPath := path.Join(c.Dir, filePath)
 	dir := path.Dir(fullPath)
-	err := os.MkdirAll(dir, 0750)
+	err := os.MkdirAll(dir, 0755)
 	if err != nil {
 		return fmt.Errorf("unable to create path for cache: %s: %w", fullPath, err)
 	}
@@ -99,6 +99,11 @@ func (c *ImageCache) WriteBytes(filePath string, data []byte) error {
 	if err = tmp.Close(); err != nil {
 		_ = os.Remove(tmpName)
 		return fmt.Errorf("unable to close temp cache file: %s: %w", tmpName, err)
+	}
+	// TempFile creates the file 0600; widen it to 0755 so the cached file is world-readable.
+	if err = os.Chmod(tmpName, 0755); err != nil {
+		_ = os.Remove(tmpName)
+		return fmt.Errorf("unable to set temp cache file permissions: %s: %w", tmpName, err)
 	}
 	if err = os.Rename(tmpName, fullPath); err != nil {
 		_ = os.Remove(tmpName)
@@ -124,12 +129,12 @@ func (c *ImageCache) Delete(filePath string) error {
 // or directories.
 func (c *ImageCache) Write(filePath string, img image.Image) error {
 	fullPath := path.Join(c.Dir, filePath)
-	err := os.MkdirAll(path.Dir(fullPath), 0750)
+	err := os.MkdirAll(path.Dir(fullPath), 0755)
 	if err != nil {
 		return fmt.Errorf("unable to create path for cache: %s: %w", fullPath, err)
 	}
 
-	f, err := os.OpenFile(fullPath, os.O_WRONLY|os.O_CREATE, 0600)
+	f, err := os.OpenFile(fullPath, os.O_WRONLY|os.O_CREATE, 0755)
 	if err != nil {
 		return fmt.Errorf("unable to open cache file for writing: %s: %w", fullPath, err)
 	}
