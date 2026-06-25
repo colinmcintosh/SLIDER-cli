@@ -38,10 +38,12 @@
             <input id="frames" type="number" min="1" max="100" value="24" />
           </div>
           <div class="col">
-            <label for="step">Step</label>
-            <input id="step" type="number" min="1" max="30" value="1" />
+            <label for="step">Time Step</label>
+            <select id="step"></select>
           </div>
         </div>
+
+        <div id="duration" class="duration"></div>
 
         <label for="loop-style">Loop</label>
         <select id="loop-style">
@@ -67,6 +69,7 @@
     </aside>
 
     <main id="map"></main>
+    <div id="loading" class="loading-indicator" hidden aria-hidden="true"></div>
   </div>
 
   <script src="/vendor/leaflet/leaflet.js"></script>

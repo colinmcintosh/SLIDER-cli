@@ -29,6 +29,7 @@ html, body {
   height: 100vh;
   width: 100vw;
   overflow: hidden;
+  position: relative;
 }
 
 #panel {
@@ -139,6 +140,37 @@ input[type="range"] {
   font-variant-numeric: tabular-nums;
   color: var(--muted);
   min-height: 14px;
+}
+
+.duration {
+  margin-top: 8px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  min-height: 15px;
+}
+
+/* Unobtrusive spinner shown over the map while tiles are loading. */
+.loading-indicator {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
+  border: 4px solid rgba(0, 0, 0, 0.45);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: slider-spin 0.8s linear infinite;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.95;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+}
+
+.loading-indicator[hidden] { display: none; }
+
+@keyframes slider-spin {
+  to { transform: rotate(360deg); }
 }
 
 #panel footer {

@@ -20,6 +20,8 @@
     status: document.getElementById("status"),
     timestamp: document.getElementById("timestamp"),
     memory: document.getElementById("memory"),
+    duration: document.getElementById("duration"),
+    loading: document.getElementById("loading"),
   };
 
   // A 1x1 fully-transparent PNG, used for tiles that don't exist (cropped sector regions).
@@ -39,6 +41,7 @@
   var coordBaseZoom = 0; // zoom level whose pixel grid the x/y params are expressed in (SLIDER convention)
   var suspendURLSync = false; // true while applying URL params, to avoid clobbering the URL
   var memoryRAF = false; // requestAnimationFrame coalescing flag for the memory estimate
+  var baseMinutes = 0; // native cadence (minutes between consecutive images) for the current product
 
   function pad(n, width) {
     var s = String(n);
@@ -93,6 +96,79 @@
     els.memory.textContent = text;
   }
 
+  // updateLoadingIndicator shows the spinner whenever any frame layer is still fetching tiles.
+  function updateLoadingIndicator() {
+    if (!els.loading) return;
+    var loading = frameLayers.some(function (l) { return l && l._loading; });
+    els.loading.hidden = !loading;
+  }
+
+  // parseTimestamp converts a 14-digit YYYYMMDDhhmmss string to epoch milliseconds (UTC).
+  function parseTimestamp(ts) {
+    return Date.UTC(
+      +ts.slice(0, 4), +ts.slice(4, 6) - 1, +ts.slice(6, 8),
+      +ts.slice(8, 10), +ts.slice(10, 12), +ts.slice(12, 14)
+    );
+  }
+
+  // computeBaseMinutes derives the native cadence (minutes between consecutive images) from a chronologically
+  // sorted list of timestamps, using the smallest positive gap. Returns 0 if it can't be determined.
+  function computeBaseMinutes(sorted) {
+    var best = 0;
+    for (var i = 1; i < sorted.length; i++) {
+      var diff = (parseTimestamp(sorted[i]) - parseTimestamp(sorted[i - 1])) / 60000;
+      if (diff > 0 && (best === 0 || diff < best)) best = diff;
+    }
+    return best;
+  }
+
+  // stepMinutesLabel renders a step multiplier as a minute interval, e.g. 2 -> "20 min" when baseMinutes is 10.
+  function stepMinutesLabel(mult) {
+    if (baseMinutes > 0) {
+      var m = mult * baseMinutes;
+      return (Number.isInteger(m) ? m : m.toFixed(1)) + " min";
+    }
+    return "×" + mult; // cadence unknown yet; show the raw multiplier
+  }
+
+  // populateStepOptions fills the time-step dropdown with the inventory's step multipliers, labelled in
+  // minutes. The option values stay the multipliers (the SLIDER-compatible `ts` param). The current selection
+  // is preserved across re-labelling.
+  function populateStepOptions() {
+    var opts = inventory.time_step_options || [];
+    var current = els.step.value || "1";
+    els.step.innerHTML = "";
+    opts.forEach(function (mult) {
+      var o = document.createElement("option");
+      o.value = String(mult);
+      o.textContent = stepMinutesLabel(mult);
+      els.step.appendChild(o);
+    });
+    // Restore the prior selection if still available, else default to the first option.
+    if (Array.prototype.some.call(els.step.options, function (o) { return o.value === current; })) {
+      els.step.value = current;
+    }
+  }
+
+  // updateDuration shows the total loop length: frames × the per-step interval, in minutes.
+  function updateDuration() {
+    if (!els.duration) return;
+    var frames = Math.max(1, Number(els.frames.value) || 0);
+    var mult = Math.max(1, Number(els.step.value) || 1);
+    if (baseMinutes <= 0) { els.duration.textContent = ""; return; }
+    var minutes = frames * mult * baseMinutes;
+    els.duration.textContent = "Loop length: " + formatDuration(minutes);
+  }
+
+  // formatDuration renders minutes as "N min", adding an "(Hh Mm)" hint for spans of an hour or more.
+  function formatDuration(minutes) {
+    var rounded = Math.round(minutes);
+    if (rounded < 60) return rounded + " min";
+    var h = Math.floor(rounded / 60);
+    var m = rounded % 60;
+    return rounded + " min (" + h + "h" + (m ? " " + m + "m" : "") + ")";
+  }
+
   // A tile layer bound to one timestamp. getTileUrl emits a path the proxy validates and caches.
   var SliderLayer = L.TileLayer.extend({
     getTileUrl: function (coords) {
@@ -113,6 +189,7 @@
     timestamps = [];
     frameIndex = 0;
     scheduleMemoryUpdate();
+    updateLoadingIndicator();
   }
 
   function currentSelection() {
@@ -149,7 +226,7 @@
       });
       window.sliderMap = map; // exposed for debugging/automation
       map.on("moveend zoomend", updateURL);
-      map.on("tileload tileunload load zoomend moveend", scheduleMemoryUpdate);
+      map.on("zoomend moveend", scheduleMemoryUpdate);
     }
     map.setMinZoom(0);
     map.setMaxZoom(overMax);
@@ -229,7 +306,7 @@
 
     var token = ++loadToken;
     var frames = Math.max(1, Math.min(100, Number(els.frames.value) || 24));
-    var step = Math.max(1, Math.min(30, Number(els.step.value) || 1));
+    var step = Math.max(1, Math.min(96, Number(els.step.value) || 1));
     var need = frames * step;
 
     setStatus("Loading…");
@@ -260,6 +337,10 @@
         all.sort(); // chronological (zero-padded fixed-width strings sort lexically)
         // Take the most recent `need`, subsample by `step`, keep chronological order.
         var recent = all.slice(Math.max(0, all.length - need));
+        // Derive the product's native cadence and relabel the time-step options in minutes.
+        baseMinutes = computeBaseMinutes(recent) || baseMinutes;
+        populateStepOptions();
+        updateDuration();
         var picked = [];
         for (var i = recent.length - 1; i >= 0 && picked.length < frames; i -= step) {
           picked.unshift(recent[i]);
@@ -293,6 +374,9 @@
             errorTileUrl: TRANSPARENT_PNG,
             slider: Object.assign({ timestamp: ts }, sliderOpts),
           });
+          // Tile/loading events fire on the layer (not the map), so listen here.
+          layer.on("loading load tileload tileerror", updateLoadingIndicator);
+          layer.on("tileload tileunload", scheduleMemoryUpdate);
           layer.addTo(map);
           frameLayers.push(layer);
         });
@@ -300,6 +384,7 @@
         showFrame(frameLayers.length - 1); // start on the most recent frame
         els.play.disabled = frameLayers.length <= 1;
         setStatus(frameLayers.length + " frames · zoom 0–" + cfg.nativeMax);
+        updateLoadingIndicator();
 
         if (pendingView) {
           applyPendingView(cfg);
@@ -368,6 +453,7 @@
   function normalizeInventory(raw) {
     var inv = {
       default_satellite: raw.default_satellite,
+      time_step_options: raw.time_step_options || [1, 2, 3, 4, 6, 8, 12, 18, 24, 36, 48, 96],
       satellites: {},
     };
     var sats = raw.Satellites || raw.satellites || {};
@@ -457,7 +543,7 @@
     q.set("p[0]", sel.product.value);
     q.set("z", map ? String(Math.round(map.getZoom())) : "0");
     q.set("im", String(Math.max(1, Math.min(100, Number(els.frames.value) || 24))));
-    q.set("ts", String(Math.max(1, Math.min(30, Number(els.step.value) || 1))));
+    q.set("ts", String(Math.max(1, Math.min(96, Number(els.step.value) || 1))));
     q.set("st", "0");
     q.set("et", "0");
     q.set("speed", String(Number(els.speed.value)));
@@ -498,7 +584,8 @@
     }
     if (p.has("ts")) {
       var ts = parseInt(p.get("ts"), 10);
-      if (ts > 0) els.step.value = Math.min(30, ts);
+      // The step <select> is pre-populated, so this selects the matching multiplier option if present.
+      if (ts > 0) els.step.value = String(ts);
     }
     if (p.has("speed")) {
       var sp = parseInt(p.get("speed"), 10);
@@ -541,8 +628,8 @@
       loadFrames();
     });
     els.product.addEventListener("change", loadFrames);
-    els.frames.addEventListener("change", loadFrames);
-    els.step.addEventListener("change", loadFrames);
+    els.frames.addEventListener("change", function () { updateDuration(); loadFrames(); });
+    els.step.addEventListener("change", function () { updateDuration(); loadFrames(); });
     els.speed.addEventListener("input", updateSpeedLabel);
     els.speed.addEventListener("change", updateURL);
     els.loopStyle.addEventListener("change", function () { rockDir = 1; updateURL(); });
@@ -561,6 +648,7 @@
         // once the frames are built. suspendURLSync keeps these reads from rewriting the URL prematurely.
         suspendURLSync = true;
         populateSatellites();
+        populateStepOptions(); // create the step options up front so a URL `ts` value can select one
         applyParamsToControls(params);
         if (params.has("z") || params.has("x") || params.has("y")) {
           pendingView = { z: params.get("z"), x: params.get("x"), y: params.get("y") };
