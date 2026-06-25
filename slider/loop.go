@@ -16,6 +16,7 @@
 package slider
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/disintegration/imaging"
 	"github.com/rs/zerolog/log"
@@ -80,17 +81,19 @@ const (
 	PNG
 )
 
-// CreateLoop creates a new loop with the options specified in the provided LoopOptions.
-func CreateLoop(opts *LoopOptions) error {
+// renderImages performs the shared setup for an animation: it resolves the timestamps to include,
+// validates the requested zoom level, and downloads/composes the full frame images. Both CreateLoop
+// (which saves to disk) and RenderLoop (which returns bytes) build on this.
+func renderImages(opts *LoopOptions) ([]image.Image, []time.Time, error) {
 	estimateCount := opts.NumberOfImages * opts.TimeStep * 5
 	latestTimesUnfiltered, err := LatestTimes(opts.Satellite, opts.Sector, opts.Product, estimateCount)
 	if err != nil {
-		return fmt.Errorf("unable to get latest times: %w", err)
+		return nil, nil, fmt.Errorf("unable to get latest times: %w", err)
 	}
 
 	selectedTimes, err := SelectTimestamps(latestTimesUnfiltered, opts)
 	if err != nil {
-		return fmt.Errorf("unable to select timestamps: %w", err)
+		return nil, nil, fmt.Errorf("unable to select timestamps: %w", err)
 	}
 
 	if opts.NumberOfImages > len(selectedTimes) {
@@ -99,7 +102,7 @@ func CreateLoop(opts *LoopOptions) error {
 	}
 
 	if (opts.Sector.MaxZoomLevel - opts.Product.ZoomLevelAdjust) < opts.ZoomLevel {
-		return fmt.Errorf("ZoomLevel %d is greater than sector or product max of %d",
+		return nil, nil, fmt.Errorf("ZoomLevel %d is greater than sector or product max of %d",
 			opts.ZoomLevel, opts.Sector.MaxZoomLevel-opts.Product.ZoomLevelAdjust)
 	}
 
@@ -108,7 +111,17 @@ func CreateLoop(opts *LoopOptions) error {
 	// Get/Download Images
 	images, err := getImages(opts, selectedTimes)
 	if err != nil {
-		return fmt.Errorf("unable to get images: %w", err)
+		return nil, nil, fmt.Errorf("unable to get images: %w", err)
+	}
+	return images, selectedTimes, nil
+}
+
+// CreateLoop creates a new loop with the options specified in the provided LoopOptions and saves it
+// to OutputDirectory.
+func CreateLoop(opts *LoopOptions) error {
+	images, selectedTimes, err := renderImages(opts)
+	if err != nil {
+		return err
 	}
 
 	// Animate
@@ -138,6 +151,44 @@ func CreateLoop(opts *LoopOptions) error {
 		return fmt.Errorf("unrecognized output file format %v", opts.FileFormat)
 	}
 	return nil
+}
+
+// RenderLoop creates a loop animation with the provided LoopOptions and returns it as an in-memory
+// byte slice along with a suggested file name (including extension). Unlike CreateLoop it does not
+// write to disk; the web server uses this to stream a generated animation directly to the client.
+func RenderLoop(opts *LoopOptions) ([]byte, string, error) {
+	images, selectedTimes, err := renderImages(opts)
+	if err != nil {
+		return nil, "", err
+	}
+
+	firstTimestamp := selectedTimes[0].Format("20060102150405")
+	lastTimestamp := selectedTimes[len(selectedTimes)-1].Format("20060102150405")
+	baseName := makeFileName(opts, firstTimestamp, lastTimestamp)
+
+	var buf bytes.Buffer
+	switch opts.FileFormat {
+	case GIF:
+		animation, err := AnimateGIF(images, opts.Speed, opts.Loop)
+		if err != nil {
+			return nil, "", fmt.Errorf("unable to create animation: %w", err)
+		}
+		if err := EncodeGIF(&buf, animation); err != nil {
+			return nil, "", err
+		}
+		return buf.Bytes(), baseName + ".gif", nil
+	case PNG:
+		animation, err := AnimatePNG(images, opts.Speed, opts.Loop)
+		if err != nil {
+			return nil, "", fmt.Errorf("unable to create animation: %w", err)
+		}
+		if err := EncodePNG(&buf, animation); err != nil {
+			return nil, "", err
+		}
+		return buf.Bytes(), baseName + ".png", nil
+	default:
+		return nil, "", fmt.Errorf("unrecognized output file format %v", opts.FileFormat)
+	}
 }
 
 func getImages(opts *LoopOptions, selectedTimes []time.Time) ([]image.Image, error) {

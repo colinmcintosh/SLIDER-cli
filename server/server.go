@@ -44,6 +44,11 @@ type Server struct {
 	// maxZoomCache memoizes the probed deepest available zoom level per satellite/sector/product, since
 	// the product metadata cannot be trusted to report it accurately.
 	maxZoomCache map[string]int
+
+	// mapTimeMu guards mapTimeCache.
+	mapTimeMu sync.Mutex
+	// mapTimeCache memoizes the latest available timestamp for a map overlay per satellite/sector/map/color.
+	mapTimeCache map[string]string
 }
 
 // New creates a Server, loading the product inventory once. If cacheDir is empty, tile caching is disabled.
@@ -73,6 +78,7 @@ func New(cacheDir string) (*Server, error) {
 		Cache:        cache,
 		client:       client,
 		maxZoomCache: make(map[string]int),
+		mapTimeCache: make(map[string]string),
 	}, nil
 }
 
@@ -82,7 +88,10 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("/api/inventory", s.handleInventory)
 	mux.HandleFunc("/api/times", s.handleTimes)
 	mux.HandleFunc("/api/maxzoom", s.handleMaxZoom)
+	// The /api/download endpoint is currently disabled. The handler (s.handleDownload) and the
+	// underlying slider.RenderLoop renderer remain in place; re-register the route to re-enable it.
 	mux.HandleFunc("/tiles/", s.handleTile)
+	mux.HandleFunc("/maps/", s.handleMapTile)
 	mux.Handle("/", s.uiHandler())
 	return mux
 }

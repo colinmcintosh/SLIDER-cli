@@ -82,6 +82,73 @@ const LatestTimesURI = "https://rammb-slider.cira.colostate.edu/data/json/%s/%s/
 // LatestTimes5760URI is the same as LatestTimesURI but with more times.
 const LatestTimes5760URI = "https://rammb-slider.cira.colostate.edu/data/json/%s/%s/%s/latest_times_5760.json"
 
+// MapTileURI is the request address for a map-overlay tile (borders, roads, cities, ...). Map overlays
+// share the imagery tile pyramid, so they align tile-for-tile with the product imagery. It contains:
+//   - Satellite
+//   - Sector
+//   - Map name
+//   - Color
+//   - Map Timestamp
+//   - Zoom Level
+//   - Tile Y-Position
+//   - Tile X-Position
+const MapTileURI = "https://slider.cira.colostate.edu/data/maps/%s/%s/%s/%s/%s/%02d/%03d_%03d.png"
+
+// MapTimesURI is the address for the list of available timestamps for a map overlay.
+//   - Satellite
+//   - Sector
+//   - Map name
+//   - Color
+const MapTimesURI = "https://slider.cira.colostate.edu/data/json/%s/%s/maps/%s/%s/latest_times_all.json"
+
+// MapTileRequest contains the parameters required to request an individual map-overlay tile from SLIDER.
+type MapTileRequest struct {
+	Satellite     string
+	Sector        string
+	Map           string
+	Color         string
+	Timestamp     string
+	ZoomLevel     int
+	TileXPosition int
+	TileYPosition int
+}
+
+// MapTileURL returns the full request URL for a map-overlay tile.
+func MapTileURL(r *MapTileRequest) string {
+	return fmt.Sprintf(MapTileURI, r.Satellite, r.Sector, r.Map, r.Color, r.Timestamp,
+		r.ZoomLevel, r.TileYPosition, r.TileXPosition)
+}
+
+// LatestMapTime returns the most recent timestamp available for a map overlay as a 14-digit string.
+// Map overlays are largely static, but they are still versioned by timestamp like the imagery.
+func LatestMapTime(satellite, sector, mapName, color string) (string, error) {
+	uri := fmt.Sprintf(MapTimesURI, satellite, sector, mapName, color)
+	resp, err := http.Get(uri)
+	if err != nil {
+		return "", fmt.Errorf("unable to get map times: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("upstream returned HTTP %d for map times", resp.StatusCode)
+	}
+	var data struct {
+		TimestampsInt []int `json:"timestamps_int"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		return "", fmt.Errorf("unable to decode map times: %w", err)
+	}
+	if len(data.TimestampsInt) == 0 {
+		return "", fmt.Errorf("no map times available")
+	}
+	latest := data.TimestampsInt[0]
+	for _, t := range data.TimestampsInt {
+		if t > latest {
+			latest = t
+		}
+	}
+	return fmt.Sprintf("%014d", latest), nil
+}
+
 // AvailableDates returns the list of dates that SLIDER has available data for as ints in the form of YYYYMMDD.
 func AvailableDates(satellite *Satellite, sector *Sector, product *Product) ([]int, error) {
 	if satellite == nil {

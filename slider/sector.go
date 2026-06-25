@@ -32,6 +32,8 @@ type Sector struct {
 	// MissingProducts is a list of satellite products that are unavailable for this sector (typically due to the lack
 	// of data availability).
 	MissingProducts []string `json:"missing_products"`
+	// MissingMaps is a list of map overlays that are unavailable for this sector.
+	MissingMaps []string `json:"missing_maps"`
 	// Navigation contains the navigation configuration for the SLIDER UI
 	Navigation *ProductNavigation `json:"navigation"`
 	// SectorTitle is a longer string with a human-readable name for the sector

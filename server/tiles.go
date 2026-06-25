@@ -119,6 +119,141 @@ func (s *Server) handleTile(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(data)
 }
 
+// handleMapTile proxies and caches a single map-overlay tile (borders, roads, cities, ...). The request
+// path mirrors the SLIDER map pyramid but is keyed by inventory IDs so it can be validated:
+//
+//	/maps/{satellite}/{sector}/{map}/{color}/{zoom}/{y}/{x}.png
+//
+// The upstream map timestamp is resolved server-side (and memoized) so the client doesn't need to know
+// it. Every path component is validated against the inventory and zoom/x/y bounds before any upstream
+// request is made.
+func (s *Server) handleMapTile(w http.ResponseWriter, r *http.Request) {
+	rest := strings.TrimPrefix(r.URL.Path, "/maps/")
+	parts := strings.Split(rest, "/")
+	if len(parts) != 7 {
+		http.Error(w, "invalid map tile path", http.StatusBadRequest)
+		return
+	}
+	satelliteID, sectorID, mapName, color := parts[0], parts[1], parts[2], parts[3]
+	zoomStr, yStr := parts[4], parts[5]
+	xStr := strings.TrimSuffix(parts[6], ".png")
+
+	satellite := s.Inventory.Satellites[satelliteID]
+	if satellite == nil {
+		http.Error(w, "unknown satellite", http.StatusBadRequest)
+		return
+	}
+	sector := satellite.Sectors[sectorID]
+	if sector == nil {
+		http.Error(w, "unknown sector", http.StatusBadRequest)
+		return
+	}
+	if s.Inventory.Defaults == nil || s.Inventory.Defaults.Maps[mapName] == "" {
+		http.Error(w, "unknown map", http.StatusBadRequest)
+		return
+	}
+	if !isSafeToken(color) {
+		http.Error(w, "invalid color", http.StatusBadRequest)
+		return
+	}
+
+	zoom, err := strconv.Atoi(zoomStr)
+	if err != nil || zoom < 0 || zoom > sector.MaxZoomLevel {
+		http.Error(w, "invalid zoom", http.StatusBadRequest)
+		return
+	}
+	numTiles := (&slider.Zoom{Level: zoom}).NumTiles()
+	x, errX := strconv.Atoi(xStr)
+	y, errY := strconv.Atoi(yStr)
+	if errX != nil || errY != nil || x < 0 || y < 0 || x >= numTiles || y >= numTiles {
+		http.Error(w, "invalid tile coordinates", http.StatusBadRequest)
+		return
+	}
+
+	timestamp, err := s.mapTime(satellite.Value, sector.Value, mapName, color)
+	if err != nil {
+		log.Warn().Msgf("unable to resolve map time for %s/%s/%s/%s: %v", satelliteID, sectorID, mapName, color, err)
+		http.Error(w, "map not found", http.StatusNotFound)
+		return
+	}
+
+	upstream := slider.MapTileURL(&slider.MapTileRequest{
+		Satellite:     satellite.Value,
+		Sector:        sector.Value,
+		Map:           mapName,
+		Color:         color,
+		Timestamp:     timestamp,
+		ZoomLevel:     zoom,
+		TileXPosition: x,
+		TileYPosition: y,
+	})
+
+	cacheKey, err := slider.URLToFilePath(upstream)
+	if err != nil {
+		http.Error(w, "invalid tile", http.StatusBadRequest)
+		return
+	}
+
+	etag := tileETag(cacheKey)
+	w.Header().Set("ETag", etag)
+	if match := r.Header.Get("If-None-Match"); match == etag {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+
+	data, err := s.tileBytes(cacheKey, upstream)
+	if err != nil {
+		if errors.Is(err, errUpstreamNotFound) {
+			http.Error(w, "tile not found", http.StatusNotFound)
+			return
+		}
+		log.Warn().Msgf("unable to fetch map tile %s: %v", upstream, err)
+		http.Error(w, "unable to fetch tile", http.StatusBadGateway)
+		return
+	}
+
+	w.Header().Set("Content-Type", "image/png")
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
+	_, _ = w.Write(data)
+}
+
+// mapTime returns the latest upstream timestamp for a map overlay, memoized per satellite/sector/map/color.
+func (s *Server) mapTime(satellite, sector, mapName, color string) (string, error) {
+	key := satellite + "/" + sector + "/" + mapName + "/" + color
+
+	s.mapTimeMu.Lock()
+	if ts, ok := s.mapTimeCache[key]; ok {
+		s.mapTimeMu.Unlock()
+		return ts, nil
+	}
+	s.mapTimeMu.Unlock()
+
+	ts, err := slider.LatestMapTime(satellite, sector, mapName, color)
+	if err != nil {
+		return "", err
+	}
+
+	s.mapTimeMu.Lock()
+	s.mapTimeCache[key] = ts
+	s.mapTimeMu.Unlock()
+	return ts, nil
+}
+
+// isSafeToken reports whether s is a short token of only lowercase letters, digits, and underscores —
+// safe to interpolate into an upstream path (used to validate overlay colors).
+func isSafeToken(s string) bool {
+	if s == "" || len(s) > 32 {
+		return false
+	}
+	for _, c := range s {
+		if !(c >= 'a' && c <= 'z') && !(c >= '0' && c <= '9') && c != '_' {
+			return false
+		}
+	}
+	return true
+}
+
 // tileBytes returns the bytes for a tile, serving from the cache when possible and otherwise fetching from
 // upstream exactly once (concurrent identical requests are collapsed via singleflight).
 func (s *Server) tileBytes(cacheKey, upstream string) ([]byte, error) {

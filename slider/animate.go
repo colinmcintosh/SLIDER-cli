@@ -22,6 +22,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"image"
 	"image/gif"
+	"io"
 	"os"
 	"sync"
 	"time"
@@ -98,9 +99,9 @@ func SaveGIF(output string, img *gif.GIF) (string, error) {
 		return "", err
 	}
 	f, _ := os.OpenFile(output+".gif", os.O_WRONLY|os.O_CREATE, 0600)
-	err = gif.EncodeAll(f, img)
+	err = EncodeGIF(f, img)
 	if err != nil {
-		return "", fmt.Errorf("unable to encode GIF: %w", err)
+		return "", err
 	}
 	log.Debug().Msgf("Saved GIF to '%s'", output+".gif")
 	err = f.Close()
@@ -108,6 +109,14 @@ func SaveGIF(output string, img *gif.GIF) (string, error) {
 		return "", fmt.Errorf("unable to close GIF file: %w", err)
 	}
 	return output + ".gif", nil
+}
+
+// EncodeGIF writes the animated GIF to w.
+func EncodeGIF(w io.Writer, img *gif.GIF) error {
+	if err := gif.EncodeAll(w, img); err != nil {
+		return fmt.Errorf("unable to encode GIF: %w", err)
+	}
+	return nil
 }
 
 // AnimatePNG animates the supplied images into a PNG image.
@@ -155,9 +164,9 @@ func SavePNG(output string, img *apng.APNG) (string, error) {
 		return "", err
 	}
 	f, _ := os.OpenFile(output+".png", os.O_WRONLY|os.O_CREATE, 0600)
-	err = apng.Encode(f, *img)
+	err = EncodePNG(f, img)
 	if err != nil {
-		return "", fmt.Errorf("unable to encode PNG: %w", err)
+		return "", err
 	}
 	log.Debug().Msgf("Saved PNG to '%s'", output+".png")
 	err = f.Close()
@@ -165,6 +174,14 @@ func SavePNG(output string, img *apng.APNG) (string, error) {
 		return "", fmt.Errorf("unable to close PNG file: %w", err)
 	}
 	return output + ".png", nil
+}
+
+// EncodePNG writes the animated PNG to w.
+func EncodePNG(w io.Writer, img *apng.APNG) error {
+	if err := apng.Encode(w, *img); err != nil {
+		return fmt.Errorf("unable to encode PNG: %w", err)
+	}
+	return nil
 }
 
 func checkFileDuplicate(output, suffix string) (string, error) {

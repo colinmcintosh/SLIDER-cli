@@ -30,6 +30,9 @@
     maxZoom: document.getElementById("max-zoom"),
     zoomIn: document.getElementById("zoom-in"),
     zoomOut: document.getElementById("zoom-out"),
+    overlay: document.getElementById("overlay"),
+    overlayList: document.getElementById("overlay-list"),
+    productOpacity: document.getElementById("product-opacity"),
     status: document.getElementById("status"),
     timestamp: document.getElementById("timestamp"),
     memory: document.getElementById("memory"),
@@ -58,6 +61,8 @@
   var currentCfg = null; // the most recent configureMap() result (tile/zoom geometry), for the Max Zoom button
   var refreshTimer = null; // setInterval handle for auto-refresh polling; null when off
   var rotation = 0; // current view rotation in degrees (applied to the map container via CSS transform)
+  var productOpacity = 1; // opacity of the satellite imagery layer (0–1), set by the Product Opacity slider
+  var overlays = {}; // active map overlays, keyed by map name -> {map,color,opacity,hidden,layer,panel}
   var maxZoomArmed = false; // true while the Max Zoom button awaits a click on the map to pick the target
   var tzOffsetMinutes = 0; // Begin/End fields are interpreted as UTC; a future time-zone selector sets this.
   var framesBeforeRange = ""; // remembered Frames value while a full Begin+End range disables that field
@@ -366,7 +371,7 @@
     if (!frameLayers.length) return;
     var clamped = Math.max(0, Math.min(index, frameLayers.length - 1));
     frameLayers.forEach(function (layer, i) {
-      layer.setOpacity(i === clamped ? 1 : 0);
+      layer.setOpacity(i === clamped ? productOpacity : 0);
     });
     frameIndex = clamped;
     els.timestamp.textContent = formatTimestamp(timestamps[clamped]);
@@ -658,6 +663,9 @@
     var inv = {
       default_satellite: raw.default_satellite,
       time_step_options: raw.time_step_options || [1, 2, 3, 4, 6, 8, 12, 18, 24, 36, 48, 96],
+      // Available map overlays (name -> friendly title) and their default colors (name -> color).
+      maps: (raw.defaults && raw.defaults.maps) || {},
+      colors: raw.colors || {},
       satellites: {},
     };
     var sats = raw.Satellites || raw.satellites || {};
@@ -683,6 +691,7 @@
           MaxZoomLevel: c.max_zoom_level,
           tile_size: c.tile_size,
           missing_products: c.missing_products,
+          missing_maps: c.missing_maps || [],
         };
       });
       var products = s.Products || s.products || {};
@@ -698,6 +707,206 @@
       inv.satellites[satID] = sat;
     });
     return inv;
+  }
+
+  // --- Map overlays -----------------------------------------------------------
+  //
+  // Overlays (borders, roads, cities, ...) are served by the same tile proxy as the imagery and share
+  // the tile pyramid, so they align tile-for-tile. Each active overlay is a Leaflet tile layer drawn
+  // above the imagery frames, plus a small control panel for its colour and opacity.
+
+  // A small, generally-available colour palette for overlays. The map's own default colour (from the
+  // inventory) is always offered too; not every colour exists upstream for every map, and any that
+  // doesn't simply renders as transparent (errorTileUrl below).
+  var OVERLAY_COLOR_CHOICES = ["white", "black", "red", "yellow", "green", "blue", "purple"];
+
+  var OverlayLayer = L.TileLayer.extend({
+    getTileUrl: function (coords) {
+      var o = this.options.overlay;
+      return (
+        "/maps/" + o.satellite + "/" + o.sector + "/" + o.map + "/" + o.color +
+        "/" + pad(coords.z, 2) + "/" + pad(coords.y, 3) + "/" + pad(coords.x, 3) + ".png"
+      );
+    },
+    _initTile: function (tile) {
+      L.TileLayer.prototype._initTile.call(this, tile);
+      var size = this.getTileSize();
+      tile.style.width = (size.x + 1) + "px";
+      tile.style.height = (size.y + 1) + "px";
+    },
+  });
+
+  function overlayTitle(name) {
+    return (inventory && inventory.maps && inventory.maps[name]) || name;
+  }
+  function overlayDefaultColor(name) {
+    return (inventory && inventory.colors && inventory.colors[name]) || "white";
+  }
+  function overlayColorChoices(name) {
+    var def = overlayDefaultColor(name);
+    var list = OVERLAY_COLOR_CHOICES.slice();
+    if (list.indexOf(def) === -1) list.unshift(def);
+    return list;
+  }
+
+  // sectorAllowsMap reports whether the current sector lists the map as available (not in missing_maps).
+  function sectorAllowsMap(name) {
+    var sel = currentSelection();
+    if (!sel) return false;
+    var missing = sel.sector.missing_maps || [];
+    return missing.indexOf(name) === -1;
+  }
+
+  // populateOverlaySelect rebuilds the "Add Overlay…" dropdown from the inventory's map list, omitting
+  // overlays that are already active or unavailable for the current sector.
+  function populateOverlaySelect() {
+    if (!inventory) return;
+    els.overlay.innerHTML = "";
+    var placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Add Overlay…";
+    els.overlay.appendChild(placeholder);
+    Object.keys(inventory.maps || {}).forEach(function (name) {
+      if (overlays[name] || !sectorAllowsMap(name)) return;
+      var o = document.createElement("option");
+      o.value = name;
+      o.textContent = overlayTitle(name);
+      els.overlay.appendChild(o);
+    });
+  }
+
+  function buildOverlayLayer(entry) {
+    var sel = currentSelection();
+    if (!map || !currentCfg || !sel) return;
+    if (entry.layer) { map.removeLayer(entry.layer); entry.layer = null; }
+    var layer = new OverlayLayer("", {
+      tileSize: currentCfg.tileSize,
+      minZoom: 0,
+      maxZoom: currentCfg.overMax,
+      maxNativeZoom: currentCfg.nativeMax,
+      noWrap: true,
+      bounds: currentCfg.bounds,
+      opacity: entry.hidden ? 0 : entry.opacity,
+      zIndex: 650, // above the imagery frames (which use Leaflet's auto-assigned low z-indexes)
+      errorTileUrl: TRANSPARENT_PNG,
+      overlay: { satellite: sel.sat.id, sector: sel.sector.id, map: entry.map, color: entry.color },
+    });
+    layer.addTo(map);
+    entry.layer = layer;
+  }
+
+  function buildOverlayPanel(entry) {
+    var panel = document.createElement("div");
+    panel.className = "subpanel";
+
+    var head = document.createElement("div");
+    head.className = "subpanel-head";
+    var title = document.createElement("span");
+    title.className = "subpanel-title";
+    title.textContent = overlayTitle(entry.map);
+    var hideLabel = document.createElement("label");
+    hideLabel.className = "checkbox inline";
+    var hide = document.createElement("input");
+    hide.type = "checkbox";
+    hide.addEventListener("change", function () { setOverlayHidden(entry.map, hide.checked); });
+    hideLabel.appendChild(hide);
+    hideLabel.appendChild(document.createTextNode(" Hide"));
+    var close = document.createElement("button");
+    close.className = "close";
+    close.type = "button";
+    close.setAttribute("aria-label", "Remove");
+    close.innerHTML = "&times;";
+    close.addEventListener("click", function () { removeOverlay(entry.map); });
+    head.appendChild(title);
+    head.appendChild(hideLabel);
+    head.appendChild(close);
+
+    var row = document.createElement("div");
+    row.className = "row";
+    var colCol = document.createElement("div");
+    colCol.className = "col";
+    var colLabel = document.createElement("label");
+    colLabel.textContent = "Color";
+    var colorSel = document.createElement("select");
+    overlayColorChoices(entry.map).forEach(function (c) {
+      var o = document.createElement("option");
+      o.value = c;
+      o.textContent = c.charAt(0).toUpperCase() + c.slice(1);
+      if (c === entry.color) o.selected = true;
+      colorSel.appendChild(o);
+    });
+    colorSel.addEventListener("change", function () { setOverlayColor(entry.map, colorSel.value); });
+    colCol.appendChild(colLabel);
+    colCol.appendChild(colorSel);
+
+    var opCol = document.createElement("div");
+    opCol.className = "col";
+    var opLabel = document.createElement("label");
+    opLabel.textContent = "Opacity";
+    var opacity = document.createElement("input");
+    opacity.type = "range";
+    opacity.min = "0";
+    opacity.max = "100";
+    opacity.value = String(Math.round(entry.opacity * 100));
+    opacity.addEventListener("input", function () { setOverlayOpacity(entry.map, Number(opacity.value) / 100); });
+    opCol.appendChild(opLabel);
+    opCol.appendChild(opacity);
+
+    row.appendChild(colCol);
+    row.appendChild(opCol);
+    panel.appendChild(head);
+    panel.appendChild(row);
+    return panel;
+  }
+
+  function addOverlay(name) {
+    if (!map || !currentCfg || !name || overlays[name]) return;
+    var entry = { map: name, color: overlayDefaultColor(name), opacity: 1, hidden: false, layer: null, panel: null };
+    overlays[name] = entry;
+    buildOverlayLayer(entry);
+    entry.panel = buildOverlayPanel(entry);
+    els.overlayList.appendChild(entry.panel);
+  }
+
+  function removeOverlay(name) {
+    var entry = overlays[name];
+    if (!entry) return;
+    if (entry.layer) map.removeLayer(entry.layer);
+    if (entry.panel && entry.panel.parentNode) entry.panel.parentNode.removeChild(entry.panel);
+    delete overlays[name];
+    populateOverlaySelect();
+  }
+
+  function setOverlayColor(name, color) {
+    var entry = overlays[name];
+    if (!entry) return;
+    entry.color = color;
+    buildOverlayLayer(entry); // the colour is part of the tile URL, so rebuild the layer
+  }
+
+  function setOverlayOpacity(name, opacity) {
+    var entry = overlays[name];
+    if (!entry) return;
+    entry.opacity = opacity;
+    if (entry.layer && !entry.hidden) entry.layer.setOpacity(opacity);
+  }
+
+  function setOverlayHidden(name, hidden) {
+    var entry = overlays[name];
+    if (!entry) return;
+    entry.hidden = hidden;
+    if (entry.layer) entry.layer.setOpacity(hidden ? 0 : entry.opacity);
+  }
+
+  // clearOverlays removes every active overlay layer and its control panel. Called when the satellite or
+  // sector changes, since overlays are sector-specific.
+  function clearOverlays() {
+    Object.keys(overlays).forEach(function (name) {
+      var entry = overlays[name];
+      if (entry.layer && map) map.removeLayer(entry.layer);
+      if (entry.panel && entry.panel.parentNode) entry.panel.parentNode.removeChild(entry.panel);
+    });
+    overlays = {};
   }
 
   // --- URL parameters (SLIDER-compatible) -------------------------------------
@@ -755,6 +964,7 @@
     q.set("speed", String(Number(els.speed.value)));
     q.set("motion", styleToMotion(els.loopStyle.value));
     q.set("angle", String(rotation));
+    q.set("opacity[0]", productOpacity.toFixed(2));
     if (map) {
       var c = map.getCenter();
       var scale = Math.pow(2, coordBaseZoom);
@@ -803,6 +1013,13 @@
       if (sp > 0) els.speed.value = Math.max(30, Math.min(600, sp));
     }
     if (p.has("motion")) els.loopStyle.value = motionToStyle(p.get("motion"));
+    if (p.has("opacity[0]")) {
+      var op = parseFloat(p.get("opacity[0]"));
+      if (!isNaN(op)) {
+        productOpacity = Math.max(0, Math.min(1, op));
+        els.productOpacity.value = String(Math.round(productOpacity * 100));
+      }
+    }
     if (p.has("angle")) {
       var ang = parseInt(p.get("angle"), 10);
       if (!isNaN(ang)) {
@@ -950,10 +1167,14 @@
     els.satellite.addEventListener("change", function () {
       populateSectors();
       populateProducts();
+      clearOverlays();
+      populateOverlaySelect();
       loadFrames();
     });
     els.sector.addEventListener("change", function () {
       populateProducts();
+      clearOverlays();
+      populateOverlaySelect();
       loadFrames();
     });
     els.product.addEventListener("change", loadFrames);
@@ -988,6 +1209,17 @@
     });
     els.zoomIn.addEventListener("click", function () { if (map) map.zoomIn(); });
     els.zoomOut.addEventListener("click", function () { if (map) map.zoomOut(); });
+    els.overlay.addEventListener("change", function () {
+      var name = els.overlay.value;
+      if (name) addOverlay(name);
+      els.overlay.value = "";
+      populateOverlaySelect();
+    });
+    els.productOpacity.addEventListener("input", function () {
+      productOpacity = Number(els.productOpacity.value) / 100;
+      if (frameLayers[frameIndex]) frameLayers[frameIndex].setOpacity(productOpacity);
+      updateURL();
+    });
 
     // Refresh the estimate periodically so the JS-heap figure stays current while the page is idle.
     setInterval(scheduleMemoryUpdate, 2000);
@@ -1009,6 +1241,7 @@
         }
         suspendURLSync = false;
 
+        populateOverlaySelect();
         loadFrames();
       })
       .catch(function (err) {

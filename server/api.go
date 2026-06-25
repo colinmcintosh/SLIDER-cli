@@ -21,8 +21,10 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/colinmcintosh/slider-cli/slider"
+	"github.com/rs/zerolog/log"
 )
 
 // handleInventory serves the full product inventory as JSON. The UI uses this single response to populate all
@@ -142,6 +144,112 @@ func (s *Server) effectiveMaxZoom(satellite *slider.Satellite, sector *slider.Se
 	s.maxZoomCache[key] = result
 	s.maxZoomMu.Unlock()
 	return result, nil
+}
+
+// handleDownload renders an animation of the requested loop and streams it back as a file download.
+// It accepts the same satellite/sector/product selection as the other endpoints plus the animation
+// parameters: zoom, frames, step, speed (GIF/PNG frame delay in 100ths of a second), motion
+// (loop/rev/rock), angle, begin/end (14-digit UTC stamps), and format (gif/png).
+func (s *Server) handleDownload(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	satellite, sector, product, ok := s.resolve(w, q.Get("satellite"), q.Get("sector"), q.Get("product"))
+	if !ok {
+		return
+	}
+
+	maxZoom := sector.MaxZoomLevel - product.ZoomLevelAdjust
+	if maxZoom < 0 {
+		maxZoom = 0
+	}
+
+	opts := &slider.LoopOptions{
+		Satellite:      satellite,
+		Sector:         sector,
+		Product:        product,
+		NumberOfImages: clampAtoi(q.Get("frames"), 24, 1, 100),
+		TimeStep:       clampAtoi(q.Get("step"), 1, 1, 1440),
+		Speed:          clampAtoi(q.Get("speed"), 15, 1, 1000),
+		ZoomLevel:      clampAtoi(q.Get("zoom"), 0, 0, maxZoom),
+		Loop:           parseLoopStyle(q.Get("motion")),
+		FileFormat:     parseFileFormat(q.Get("format")),
+	}
+	if a, err := strconv.ParseFloat(q.Get("angle"), 64); err == nil {
+		opts.Angle = a
+	}
+	// Begin-anchored selection takes precedence over end-anchored, matching the CLI. Absent or "0"
+	// means unset, which renders the most recent imagery.
+	if t, ok := parseStamp(q.Get("begin")); ok {
+		opts.BeginTime = t
+	} else if t, ok := parseStamp(q.Get("end")); ok {
+		opts.EndTime = t
+	}
+	if s.Cache != nil {
+		opts.CacheDirectory = s.Cache.Dir
+	}
+
+	data, filename, err := slider.RenderLoop(opts)
+	if err != nil {
+		log.Error().Err(err).Msg("unable to render animation for download")
+		http.Error(w, "unable to render animation", http.StatusBadGateway)
+		return
+	}
+
+	contentType := "image/gif"
+	if opts.FileFormat == slider.PNG {
+		contentType = "image/png"
+	}
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
+	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
+	w.Header().Set("Cache-Control", "no-store")
+	_, _ = w.Write(data)
+}
+
+// clampAtoi parses s as an integer, falling back to def when it is empty or invalid, and clamps the
+// result to the inclusive range [min, max].
+func clampAtoi(s string, def, min, max int) int {
+	v, err := strconv.Atoi(s)
+	if err != nil {
+		v = def
+	}
+	if v < min {
+		v = min
+	}
+	if v > max {
+		v = max
+	}
+	return v
+}
+
+func parseLoopStyle(s string) slider.LoopStyle {
+	switch s {
+	case "rev", "reverse":
+		return slider.ReverseLoop
+	case "rock":
+		return slider.RockLoop
+	default:
+		return slider.ForwardLoop
+	}
+}
+
+func parseFileFormat(s string) slider.FileFormat {
+	if s == "png" {
+		return slider.PNG
+	}
+	return slider.GIF
+}
+
+// parseStamp parses a 14-digit UTC timestamp (YYYYMMDDhhmmss). It returns ok=false for an empty,
+// "0", or unparseable value.
+func parseStamp(s string) (time.Time, bool) {
+	if s == "" || s == "0" {
+		return time.Time{}, false
+	}
+	t, err := time.Parse("20060102150405", s)
+	if err != nil {
+		return time.Time{}, false
+	}
+	return t, true
 }
 
 // resolve looks up a satellite/sector/product by their IDs and validates that the combination is available.
