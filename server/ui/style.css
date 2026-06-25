@@ -39,29 +39,30 @@ html, body {
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  padding: 18px 18px 12px;
+  padding: 10px 12px 8px;
   overflow-y: auto;
 }
 
 #panel header h1 {
   margin: 0;
-  font-size: 22px;
+  font-size: 18px;
+  line-height: 1.1;
   letter-spacing: 3px;
   font-weight: 700;
 }
 
 #panel header .subtitle {
-  margin: 2px 0 18px;
+  margin: 1px 0 4px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   letter-spacing: 1px;
   text-transform: uppercase;
 }
 
 .controls label {
   display: block;
-  margin: 14px 0 4px;
-  font-size: 12px;
+  margin: 2px 0 2px;
+  font-size: 11px;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -70,12 +71,12 @@ html, body {
 .controls select,
 .controls input[type="number"] {
   width: 100%;
-  padding: 8px 10px;
+  padding: 3px 8px;
   background: var(--panel-2);
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .controls select:focus,
@@ -95,6 +96,8 @@ html, body {
 
 input[type="range"] {
   width: 100%;
+  height: 14px;
+  margin: 2px 0 3px;
   accent-color: var(--accent);
 }
 
@@ -102,10 +105,10 @@ input[type="range"] {
 .controls label.checkbox {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   text-transform: none;
   letter-spacing: normal;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text);
   cursor: pointer;
 }
@@ -116,16 +119,29 @@ input[type="range"] {
   cursor: pointer;
 }
 
+/* Frame scrubber + Prev/Next, pinned at the top of the sidebar. */
+.scrubber-bar {
+  margin: 4px 0 6px;
+}
+.scrubber-bar #scrubber { margin: 0 0 6px; }
+
 .playback {
-  margin-top: 18px;
+  margin-top: 6px;
   border-top: 1px solid var(--border);
-  padding-top: 16px;
+  padding-top: 6px;
+}
+
+/* Play button and the loop-style selector share one row. */
+.play-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
 }
 
 #play {
-  width: 100%;
-  padding: 12px;
-  font-size: 15px;
+  flex: 1 1 auto;
+  padding: 7px;
+  font-size: 14px;
   font-weight: 600;
   color: #fff;
   background: var(--accent-2);
@@ -138,34 +154,154 @@ input[type="range"] {
 #play:hover { background: var(--accent); }
 #play:disabled { opacity: 0.5; cursor: default; }
 
+.play-row #loop-style {
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+}
+.play-row #loop-style:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* Secondary button, matching the panel-2 look of the former Max Zoom button. */
+.btn {
+  width: 100%;
+  padding: 5px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Toggle button (auto-refresh): a <label> styled like .btn, wrapping a hidden checkbox.
+   It lights up when the checkbox is checked. */
+.btn.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-transform: none;
+  letter-spacing: normal;
+  margin: 0;
+}
+.btn.toggle input { display: none; }
+.btn.toggle:has(input:checked) {
+  color: #fff;
+  background: var(--accent-2);
+  border-color: var(--accent-2);
+}
+
+/* Row of buttons sharing the width evenly (e.g. Prev/Next, Query/Download). */
+.btn-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.btn-row .btn { margin-top: 0; }
+
+/* Subtle separator + spacing for each appended mock section. */
+.mock-group {
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+  padding-top: 3px;
+}
+
+/* Bordered card for the Lat/Lon grid and product-opacity controls. */
+.subpanel {
+  margin-top: 6px;
+  padding: 5px 8px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel-2);
+}
+
+.subpanel-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.subpanel-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  margin-right: auto;
+}
+
+/* Compact checkbox that sits inline in a sub-panel header (no block margins). */
+.controls label.checkbox.inline {
+  margin: 0;
+  font-size: 11px;
+}
+
+.subpanel .close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+.subpanel .close:hover { color: var(--accent); }
+
+/* Date/time pickers match the select/number inputs; color-scheme renders the native picker dark. */
+.controls input[type="date"],
+.controls input[type="time"] {
+  width: 100%;
+  padding: 3px 8px;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  color-scheme: dark;
+}
+.controls input[type="date"]:focus,
+.controls input[type="time"]:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
 .status {
-  margin-top: 10px;
+  margin-top: 4px;
   font-size: 12px;
   color: var(--muted);
-  min-height: 16px;
+  min-height: 14px;
 }
 
 .timestamp {
-  margin-top: 4px;
+  margin-top: 3px;
   font-size: 13px;
   font-variant-numeric: tabular-nums;
   color: var(--text);
 }
 
 .memory {
-  margin-top: 6px;
+  margin-top: 3px;
   font-size: 11px;
   font-variant-numeric: tabular-nums;
   color: var(--muted);
-  min-height: 14px;
+  min-height: 13px;
 }
 
 .duration {
-  margin-top: 8px;
+  margin-top: 4px;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   color: var(--muted);
-  min-height: 15px;
+  min-height: 14px;
 }
 
 /* Unobtrusive spinner shown over the map while tiles are loading. */
@@ -193,7 +329,7 @@ input[type="range"] {
 
 #panel footer {
   margin-top: auto;
-  padding-top: 14px;
+  padding-top: 6px;
   font-size: 11px;
 }
 
@@ -207,9 +343,9 @@ input[type="range"] {
 }
 
 #panel footer .disclaimer {
-  margin-top: 6px;
+  margin-top: 4px;
   font-size: 10px;
-  line-height: 1.4;
+  line-height: 1.3;
   opacity: 0.75;
 }
 

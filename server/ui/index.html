@@ -24,6 +24,20 @@
         <p class="subtitle">Animated satellite imagery</p>
       </header>
 
+      <!-- Frame scrubber + step buttons are mocked (no behavior wired yet). -->
+      <section class="scrubber-bar">
+        <input id="scrubber" class="mock" type="range" min="0" max="100" value="100"
+               title="Mock — not yet wired" aria-label="Frame scrubber" />
+        <div class="btn-row">
+          <!-- Auto-refresh styled as a toggle button (the checkbox stays for the app.js wiring). -->
+          <label class="btn toggle" title="Auto-refresh">
+            <input id="auto-refresh" type="checkbox" /> Auto &#8635;
+          </label>
+          <button class="btn mock" type="button" title="Mock — not yet wired">&#9664; Prev</button>
+          <button class="btn mock" type="button" title="Mock — not yet wired">Next &#9654;</button>
+        </div>
+      </section>
+
       <section class="controls">
         <label for="satellite">Satellite</label>
         <select id="satellite"></select>
@@ -45,17 +59,6 @@
           </div>
         </div>
 
-        <div id="duration" class="duration"></div>
-
-        <label for="loop-style">Loop</label>
-        <select id="loop-style">
-          <option value="forward">Forward</option>
-          <option value="reverse">Reverse</option>
-          <option value="rock">Rock</option>
-        </select>
-
-        <label class="checkbox"><input id="auto-refresh" type="checkbox" /> Auto-refresh</label>
-
         <label for="speed">Speed <span id="speed-label"></span></label>
         <input id="speed" type="range" min="30" max="600" step="10" value="150" />
 
@@ -64,8 +67,108 @@
       </section>
 
       <section class="playback">
-        <button id="play" type="button">Play</button>
+        <div class="play-row">
+          <button id="play" type="button">Play</button>
+          <select id="loop-style" aria-label="Loop style">
+            <option value="forward">Forward</option>
+            <option value="reverse">Reverse</option>
+            <option value="rock">Rock</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Layers & overlays (mocked) ------------------------------------------ -->
+      <section class="controls mock-group">
+        <label for="overlay">Overlays</label>
+        <select id="overlay" class="mock" title="Mock — not yet wired">
+          <option>Add Overlay…</option>
+          <option>State / County Borders</option>
+          <option>Cities</option>
+          <option>Roads</option>
+          <option>Lat/Lon Grid</option>
+        </select>
+
+        <label for="basemap">Base Map</label>
+        <select id="basemap" class="mock" title="Mock — not yet wired">
+          <option>Add Map…</option>
+          <option>Street</option>
+          <option>Satellite</option>
+          <option>Terrain</option>
+          <option>Dark</option>
+        </select>
+
+        <div class="subpanel mock">
+          <div class="subpanel-head">
+            <span class="subpanel-title">Lat/Lon Grid</span>
+            <label class="checkbox inline"><input type="checkbox" /> Hide</label>
+            <button class="close" type="button" title="Mock — not yet wired" aria-label="Remove">&times;</button>
+          </div>
+          <div class="row">
+            <div class="col">
+              <label for="grid-color">Color</label>
+              <select id="grid-color">
+                <option>White</option>
+                <option>Black</option>
+                <option>Red</option>
+                <option>Yellow</option>
+              </select>
+            </div>
+            <div class="col">
+              <label for="grid-opacity">Opacity</label>
+              <input id="grid-opacity" type="range" min="0" max="100" value="100" />
+            </div>
+          </div>
+        </div>
+
+        <div class="subpanel mock">
+          <div class="subpanel-head">
+            <span class="subpanel-title">Product Opacity</span>
+            <label class="checkbox inline"><input type="checkbox" /> Hide</label>
+            <button class="close" type="button" title="Mock — not yet wired" aria-label="Remove">&times;</button>
+          </div>
+          <input type="range" min="0" max="100" value="100" aria-label="Product opacity" />
+          <button class="btn" type="button" title="Mock — not yet wired">Info</button>
+        </div>
+      </section>
+
+      <!-- Archived imagery (mocked) ------------------------------------------- -->
+      <section class="controls mock-group">
+        <label class="checkbox"><input id="archived" type="checkbox" class="mock" /> Archived Imagery</label>
+
+        <label>Begin</label>
+        <div class="row">
+          <div class="col"><input class="mock" type="date" title="Mock — not yet wired" aria-label="Begin date" /></div>
+          <div class="col"><input class="mock" type="time" title="Mock — not yet wired" aria-label="Begin time" /></div>
+        </div>
+
+        <label>End</label>
+        <div class="row">
+          <div class="col"><input class="mock" type="date" title="Mock — not yet wired" aria-label="End date" /></div>
+          <div class="col"><input class="mock" type="time" title="Mock — not yet wired" aria-label="End time" /></div>
+        </div>
+      </section>
+
+      <!-- Tools & links (mocked) ---------------------------------------------- -->
+      <section class="controls mock-group">
+        <div class="btn-row">
+          <button class="btn mock" type="button" title="Mock — not yet wired">Query Lat/Lon</button>
+          <button class="btn mock" type="button" title="Mock — not yet wired">Download</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn mock" type="button" title="Mock — not yet wired">Mouse Draw</button>
+          <button class="btn mock" type="button" title="Mock — not yet wired">Clear Drawings</button>
+        </div>
+        <label class="checkbox"><input id="follow-feature" type="checkbox" class="mock" /> Follow Feature</label>
+        <div class="btn-row">
+          <button class="btn mock" type="button" title="Mock — not yet wired">Hide</button>
+          <button class="btn mock" type="button" title="Mock — not yet wired">Clear</button>
+        </div>
+      </section>
+
+      <!-- Status readouts: loop length, frame count, available zoom levels, time, memory. -->
+      <section class="info mock-group">
         <div id="status" class="status">Loading&hellip;</div>
+        <div id="duration" class="duration"></div>
         <div id="timestamp" class="timestamp"></div>
         <div id="memory" class="memory"></div>
       </section>
