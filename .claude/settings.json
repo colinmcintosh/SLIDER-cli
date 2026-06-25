@@ -1,0 +1,13 @@
+{
+  "includeCoAuthoredBy": false,
+  "gitAttribution": false,
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "permissions": {
+    "allow": [
+      "Bash(gh *)"
+    ]
+  }
+}
