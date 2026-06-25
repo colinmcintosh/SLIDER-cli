@@ -386,6 +386,13 @@ input[type="range"] {
    instead (see _initTile override in app.js), so disable the blend mode here. */
 #map img.leaflet-tile { mix-blend-mode: normal; }
 
+/* Product overlays are opaque satellite imagery with a black "no-data" background. Blend the whole
+   overlay layer with "screen" so those black regions reveal the base product and only the brighter
+   features (clouds, etc.) stack on top — matching how SLIDER composites stacked products. The blend is
+   applied at the layer-container level (the per-tile rule above keeps tiles compositing normally within
+   the layer, then the layer screens against the imagery beneath it as a group). */
+#map .leaflet-layer.overlay-product { mix-blend-mode: screen; isolation: auto; }
+
 /* Static zoom buttons, pinned to the map frame (#map-wrap) so they stay put through rotation. Styled to
    match Leaflet's default zoom control, which they replace (the built-in control is disabled in app.js). */
 .map-zoom {

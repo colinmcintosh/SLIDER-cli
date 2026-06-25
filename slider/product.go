@@ -47,6 +47,14 @@ func (p *Product) ID() string {
 	return strings.ReplaceAll(p.Value, "_", "-")
 }
 
+// ProductCategory is a named, ordered group of products as presented in SLIDER's product selector.
+// The Title comes from a "----------SECTION----------" header entry; Products lists the product IDs
+// that follow it, in SLIDER's order.
+type ProductCategory struct {
+	Title    string   `json:"title"`
+	Products []string `json:"products"`
+}
+
 // ProductInventory contains all of the product information for SLIDER.
 type ProductInventory struct {
 	NumberOfImagesOptions []int                 `json:"number_of_images_options"`
@@ -112,6 +120,12 @@ func ParseProductsJS(data []byte) (*ProductInventory, error) {
 		return nil, fmt.Errorf("unable to unmarshal products JSON: %w", err)
 	}
 
+	// Capture the ordered product categories before the products are rekeyed into unordered maps.
+	categories, err := parseProductCategories(data[s : e+1])
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse product categories: %w", err)
+	}
+
 	var newSatellites = make(map[string]*Satellite)
 	for satVal, sat := range inventory.Satellites {
 		sat.Value = satVal
@@ -139,9 +153,80 @@ func ParseProductsJS(data []byte) (*ProductInventory, error) {
 			newProducts[product.ID()] = product
 		}
 		sat.Products = newProducts
+		sat.ProductCategories = categories[sat.ID()]
 	}
 	inventory.Satellites = newSatellites
 	return inventory, nil
+}
+
+// parseProductCategories extracts each satellite's ordered product categories from the raw products
+// JSON, keyed by satellite ID. JSON object key order is preserved by decoding with a streaming token
+// reader (the regular struct unmarshal stores products in unordered maps). Header entries whose title
+// is wrapped in dashes ("----------SECTION----------") start a new category and are not themselves
+// products.
+func parseProductCategories(raw []byte) (map[string][]*ProductCategory, error) {
+	var ordered struct {
+		Satellites map[string]struct {
+			Products json.RawMessage `json:"products"`
+		} `json:"satellites"`
+	}
+	if err := json.Unmarshal(raw, &ordered); err != nil {
+		return nil, err
+	}
+
+	result := make(map[string][]*ProductCategory)
+	for satVal, sat := range ordered.Satellites {
+		if len(sat.Products) == 0 {
+			continue
+		}
+		cats, err := productCategoriesFromJSON(sat.Products)
+		if err != nil {
+			return nil, err
+		}
+		satID := strings.ReplaceAll(satVal, "_", "-")
+		result[satID] = cats
+	}
+	return result, nil
+}
+
+// productCategoriesFromJSON walks a products object in source order, grouping products under the most
+// recent section header.
+func productCategoriesFromJSON(productsRaw []byte) ([]*ProductCategory, error) {
+	dec := json.NewDecoder(bytes.NewReader(productsRaw))
+	if _, err := dec.Token(); err != nil { // consume the opening '{'
+		return nil, err
+	}
+
+	var cats []*ProductCategory
+	var current *ProductCategory
+	for dec.More() {
+		keyTok, err := dec.Token()
+		if err != nil {
+			return nil, err
+		}
+		key, _ := keyTok.(string)
+
+		var p struct {
+			ProductTitle string `json:"product_title"`
+		}
+		if err := dec.Decode(&p); err != nil {
+			return nil, err
+		}
+
+		title := html.UnescapeString(p.ProductTitle)
+		if strings.HasPrefix(strings.TrimSpace(title), "---") {
+			current = &ProductCategory{Title: strings.TrimSpace(strings.Trim(strings.TrimSpace(title), "-"))}
+			cats = append(cats, current)
+			continue
+		}
+		if current == nil {
+			// Products that appear before any header go in a leading, untitled category.
+			current = &ProductCategory{}
+			cats = append(cats, current)
+		}
+		current.Products = append(current.Products, strings.ReplaceAll(key, "_", "-"))
+	}
+	return cats, nil
 }
 
 // GetProductInventory will download the latest products from SLIDER or return the builtin fail-safe product

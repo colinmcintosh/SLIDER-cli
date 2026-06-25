@@ -297,6 +297,14 @@
       map.removeLayer(layer);
     });
     frameLayers = [];
+    // Product overlays keep parallel frame layers; drop them too (the entries persist and are rebuilt).
+    Object.keys(overlays).forEach(function (key) {
+      var entry = overlays[key];
+      if (entry.kind === "product") {
+        entry.frames.forEach(function (l) { map.removeLayer(l); });
+        entry.frames = [];
+      }
+    });
     timestamps = [];
     frameIndex = 0;
     syncScrubber();
@@ -374,6 +382,10 @@
       layer.setOpacity(i === clamped ? productOpacity : 0);
     });
     frameIndex = clamped;
+    // Keep any product overlays in lock-step with the base loop.
+    Object.keys(overlays).forEach(function (key) {
+      if (overlays[key].kind === "product") showProductOverlayFrame(overlays[key], clamped);
+    });
     els.timestamp.textContent = formatTimestamp(timestamps[clamped]);
     syncScrubber();
   }
@@ -535,6 +547,9 @@
           frameLayers.push(layer);
         });
 
+        // Rebuild any product overlays for the new timestamps before showing the first frame, so they
+        // appear in sync with the base loop.
+        rebuildProductOverlayFrames();
         showFrame(frameLayers.length - 1); // start on the most recent frame
         els.play.disabled = frameLayers.length <= 1;
         // In Begin+End mode the range can exceed the layer cap; note when the newest frames were kept.
@@ -643,18 +658,57 @@
     if (sat.sectors[def]) els.sector.value = def;
   }
 
+  // productCategoriesFor returns the satellite's product sections in SLIDER order, each with the
+  // products available for the given sector (missing ones removed). Empty sections are dropped. When the
+  // inventory carries no category data it falls back to a single untitled section of all products.
+  function productCategoriesFor(sat, sector) {
+    var missing = {};
+    (sector.missing_products || []).forEach(function (v) { missing[toID(v)] = true; });
+    var cats = sat.product_categories && sat.product_categories.length
+      ? sat.product_categories
+      : [{ title: "", products: Object.keys(sat.products) }];
+    var out = [];
+    cats.forEach(function (c) {
+      var items = (c.products || [])
+        .filter(function (id) { return sat.products[id] && !missing[id]; })
+        .map(function (id) { return { id: id, title: sat.products[id].product_title || id }; });
+      if (items.length) out.push({ title: c.title, items: items });
+    });
+    return out;
+  }
+
+  // appendOptions adds an item list to a select, under an <optgroup> when a section title is given.
+  function appendOptions(select, title, items, valuePrefix) {
+    var parent = select;
+    if (title) {
+      var grp = document.createElement("optgroup");
+      grp.label = title;
+      select.appendChild(grp);
+      parent = grp;
+    }
+    items.forEach(function (it) {
+      var opt = document.createElement("option");
+      opt.value = (valuePrefix || "") + it.id;
+      opt.textContent = it.title;
+      parent.appendChild(opt);
+    });
+  }
+
   function populateProducts() {
     var sat = inventory.satellites[els.satellite.value];
     var sector = sat.sectors[els.sector.value];
     var missing = {};
     (sector.missing_products || []).forEach(function (v) { missing[toID(v)] = true; });
-    var items = sortedEntries(sat.products)
-      .filter(function (e) { return !missing[e.id]; })
-      .map(function (e) { return { id: e.id, title: e.obj.product_title || e.id }; })
-      .sort(function (a, b) { return a.title.localeCompare(b.title); });
-    fillSelect(els.product, items);
-    var def = sector.default_product ? toID(sector.default_product) : items[0].id;
-    if (!missing[def] && sat.products[def]) els.product.value = def;
+    els.product.innerHTML = "";
+    productCategoriesFor(sat, sector).forEach(function (c) {
+      appendOptions(els.product, c.title, c.items, "");
+    });
+    var def = sector.default_product ? toID(sector.default_product) : null;
+    if (def && sat.products[def] && !missing[def]) {
+      els.product.value = def;
+    } else if (els.product.options.length) {
+      els.product.selectedIndex = 0;
+    }
   }
 
   // The inventory JSON uses Go field names for untagged fields (Satellites/Sectors/Products/Value). Normalize
@@ -676,6 +730,8 @@
         value: s.Value || satID, // SLIDER's URL value (e.g. "goes-16")
         satellite_title: s.satellite_title,
         default_sector: s.default_sector,
+        // SLIDER's ordered product sections ([{title, products:[ids]}]); used to group the selectors.
+        product_categories: s.product_categories || [],
         sectors: {},
         products: {},
       };
@@ -709,16 +765,23 @@
     return inv;
   }
 
-  // --- Map overlays -----------------------------------------------------------
+  // --- Overlays ---------------------------------------------------------------
   //
-  // Overlays (borders, roads, cities, ...) are served by the same tile proxy as the imagery and share
-  // the tile pyramid, so they align tile-for-tile. Each active overlay is a Leaflet tile layer drawn
-  // above the imagery frames, plus a small control panel for its colour and opacity.
+  // The "Add Overlay" control adds two kinds of layer above the base imagery, matching the public
+  // SLIDER:
+  //   - Map overlays (borders, roads, cities, ...): a single static tile layer served by the /maps/
+  //     proxy, which shares the imagery tile pyramid so it aligns tile-for-tile.
+  //   - Product overlays: an additional satellite product stacked on top, animated in sync with the
+  //     base loop. Each product overlay keeps its own per-timestamp frame layers (parallel to the base
+  //     frames) and is driven by the same frameIndex.
+  // Overlays are keyed by "map:<name>" or "product:<id>". Each gets a control panel for opacity/hide
+  // (and colour, for maps).
 
-  // A small, generally-available colour palette for overlays. The map's own default colour (from the
-  // inventory) is always offered too; not every colour exists upstream for every map, and any that
+  // A small, generally-available colour palette for map overlays. The map's own default colour (from
+  // the inventory) is always offered too; not every colour exists upstream for every map, and any that
   // doesn't simply renders as transparent (errorTileUrl below).
   var OVERLAY_COLOR_CHOICES = ["white", "black", "red", "yellow", "green", "blue", "purple"];
+  var productOverlayZ = 500; // z-index assigned to product-overlay frames (above base, below map overlays)
 
   var OverlayLayer = L.TileLayer.extend({
     getTileUrl: function (coords) {
@@ -736,7 +799,7 @@
     },
   });
 
-  function overlayTitle(name) {
+  function mapOverlayTitle(name) {
     return (inventory && inventory.maps && inventory.maps[name]) || name;
   }
   function overlayDefaultColor(name) {
@@ -757,25 +820,36 @@
     return missing.indexOf(name) === -1;
   }
 
-  // populateOverlaySelect rebuilds the "Add Overlay…" dropdown from the inventory's map list, omitting
-  // overlays that are already active or unavailable for the current sector.
+  // populateOverlaySelect rebuilds the "Add Overlay…" dropdown with a Maps section and the product
+  // sections (in SLIDER order), omitting overlays that are already active, the current base product, or
+  // maps unavailable for the current sector.
   function populateOverlaySelect() {
     if (!inventory) return;
+    var sel = currentSelection();
     els.overlay.innerHTML = "";
     var placeholder = document.createElement("option");
     placeholder.value = "";
     placeholder.textContent = "Add Overlay…";
     els.overlay.appendChild(placeholder);
-    Object.keys(inventory.maps || {}).forEach(function (name) {
-      if (overlays[name] || !sectorAllowsMap(name)) return;
-      var o = document.createElement("option");
-      o.value = name;
-      o.textContent = overlayTitle(name);
-      els.overlay.appendChild(o);
-    });
+
+    var maps = Object.keys(inventory.maps || {})
+      .filter(function (name) { return !overlays["map:" + name] && sectorAllowsMap(name); })
+      .map(function (name) { return { id: name, title: mapOverlayTitle(name) }; });
+    appendOptions(els.overlay, "Maps", maps, "map:");
+
+    if (sel) {
+      productCategoriesFor(sel.sat, sel.sector).forEach(function (c) {
+        var items = c.items.filter(function (it) {
+          return it.id !== sel.product.id && !overlays["product:" + it.id];
+        });
+        if (items.length) appendOptions(els.overlay, c.title || "Products", items, "product:");
+      });
+    }
   }
 
-  function buildOverlayLayer(entry) {
+  // buildMapOverlayLayer (re)creates the single tile layer for a map overlay. The colour is part of the
+  // tile URL, so a colour change rebuilds the layer.
+  function buildMapOverlayLayer(entry) {
     var sel = currentSelection();
     if (!map || !currentCfg || !sel) return;
     if (entry.layer) { map.removeLayer(entry.layer); entry.layer = null; }
@@ -787,12 +861,61 @@
       noWrap: true,
       bounds: currentCfg.bounds,
       opacity: entry.hidden ? 0 : entry.opacity,
-      zIndex: 650, // above the imagery frames (which use Leaflet's auto-assigned low z-indexes)
+      zIndex: 650, // above both the base imagery frames and the product overlays
       errorTileUrl: TRANSPARENT_PNG,
       overlay: { satellite: sel.sat.id, sector: sel.sector.id, map: entry.map, color: entry.color },
     });
     layer.addTo(map);
     entry.layer = layer;
+  }
+
+  // buildProductOverlayFrames (re)creates a product overlay's per-timestamp frame layers for the current
+  // selection's timestamps, so it animates in lock-step with the base loop.
+  function buildProductOverlayFrames(entry) {
+    var sel = currentSelection();
+    if (!map || !currentCfg || !sel) return;
+    entry.frames.forEach(function (l) { map.removeLayer(l); });
+    entry.frames = [];
+    timestamps.forEach(function (ts) {
+      var layer = new SliderLayer("", {
+        tileSize: currentCfg.tileSize,
+        minZoom: 0,
+        maxZoom: currentCfg.overMax,
+        maxNativeZoom: currentCfg.nativeMax,
+        noWrap: true,
+        bounds: currentCfg.bounds,
+        keepBuffer: 4,
+        updateWhenIdle: false,
+        opacity: 0,
+        zIndex: entry.zIndex,
+        // Product tiles are opaque with a black "no-data" background, so a normal overlay would paint the
+        // base solid black. Blend with "screen" (matching SLIDER) so black regions reveal the base and
+        // only the brighter features stack on top.
+        className: "overlay-product",
+        errorTileUrl: TRANSPARENT_PNG,
+        slider: { satellite: sel.sat.id, sector: sel.sector.id, product: entry.product, timestamp: ts },
+      });
+      layer.addTo(map);
+      entry.frames.push(layer);
+    });
+    showProductOverlayFrame(entry, frameIndex);
+  }
+
+  // showProductOverlayFrame reveals the overlay's layer for the given frame index (at the overlay's
+  // opacity, unless hidden) and hides the rest — mirroring showFrame for the base imagery.
+  function showProductOverlayFrame(entry, index) {
+    if (!entry.frames.length) return;
+    var clamped = Math.max(0, Math.min(index, entry.frames.length - 1));
+    var vis = entry.hidden ? 0 : entry.opacity;
+    entry.frames.forEach(function (l, i) { l.setOpacity(i === clamped ? vis : 0); });
+  }
+
+  // rebuildProductOverlayFrames rebuilds every active product overlay's frames after the base loop is
+  // (re)built, so they track the same timestamps. Called from loadFrames.
+  function rebuildProductOverlayFrames() {
+    Object.keys(overlays).forEach(function (key) {
+      if (overlays[key].kind === "product") buildProductOverlayFrames(overlays[key]);
+    });
   }
 
   function buildOverlayPanel(entry) {
@@ -803,12 +926,12 @@
     head.className = "subpanel-head";
     var title = document.createElement("span");
     title.className = "subpanel-title";
-    title.textContent = overlayTitle(entry.map);
+    title.textContent = entry.title;
     var hideLabel = document.createElement("label");
     hideLabel.className = "checkbox inline";
     var hide = document.createElement("input");
     hide.type = "checkbox";
-    hide.addEventListener("change", function () { setOverlayHidden(entry.map, hide.checked); });
+    hide.addEventListener("change", function () { setOverlayHidden(entry.key, hide.checked); });
     hideLabel.appendChild(hide);
     hideLabel.appendChild(document.createTextNode(" Hide"));
     var close = document.createElement("button");
@@ -816,28 +939,33 @@
     close.type = "button";
     close.setAttribute("aria-label", "Remove");
     close.innerHTML = "&times;";
-    close.addEventListener("click", function () { removeOverlay(entry.map); });
+    close.addEventListener("click", function () { removeOverlay(entry.key); });
     head.appendChild(title);
     head.appendChild(hideLabel);
     head.appendChild(close);
 
     var row = document.createElement("div");
     row.className = "row";
-    var colCol = document.createElement("div");
-    colCol.className = "col";
-    var colLabel = document.createElement("label");
-    colLabel.textContent = "Color";
-    var colorSel = document.createElement("select");
-    overlayColorChoices(entry.map).forEach(function (c) {
-      var o = document.createElement("option");
-      o.value = c;
-      o.textContent = c.charAt(0).toUpperCase() + c.slice(1);
-      if (c === entry.color) o.selected = true;
-      colorSel.appendChild(o);
-    });
-    colorSel.addEventListener("change", function () { setOverlayColor(entry.map, colorSel.value); });
-    colCol.appendChild(colLabel);
-    colCol.appendChild(colorSel);
+
+    // Map overlays expose a colour selector; product overlays do not.
+    if (entry.kind === "map") {
+      var colCol = document.createElement("div");
+      colCol.className = "col";
+      var colLabel = document.createElement("label");
+      colLabel.textContent = "Color";
+      var colorSel = document.createElement("select");
+      overlayColorChoices(entry.map).forEach(function (c) {
+        var o = document.createElement("option");
+        o.value = c;
+        o.textContent = c.charAt(0).toUpperCase() + c.slice(1);
+        if (c === entry.color) o.selected = true;
+        colorSel.appendChild(o);
+      });
+      colorSel.addEventListener("change", function () { setMapOverlayColor(entry.key, colorSel.value); });
+      colCol.appendChild(colLabel);
+      colCol.appendChild(colorSel);
+      row.appendChild(colCol);
+    }
 
     var opCol = document.createElement("div");
     opCol.className = "col";
@@ -848,62 +976,99 @@
     opacity.min = "0";
     opacity.max = "100";
     opacity.value = String(Math.round(entry.opacity * 100));
-    opacity.addEventListener("input", function () { setOverlayOpacity(entry.map, Number(opacity.value) / 100); });
+    opacity.addEventListener("input", function () { setOverlayOpacity(entry.key, Number(opacity.value) / 100); });
     opCol.appendChild(opLabel);
     opCol.appendChild(opacity);
-
-    row.appendChild(colCol);
     row.appendChild(opCol);
+
     panel.appendChild(head);
     panel.appendChild(row);
     return panel;
   }
 
-  function addOverlay(name) {
-    if (!map || !currentCfg || !name || overlays[name]) return;
-    var entry = { map: name, color: overlayDefaultColor(name), opacity: 1, hidden: false, layer: null, panel: null };
-    overlays[name] = entry;
-    buildOverlayLayer(entry);
+  function addMapOverlay(name) {
+    var key = "map:" + name;
+    if (!map || !currentCfg || !name || overlays[key]) return;
+    var entry = {
+      key: key, kind: "map", map: name, title: mapOverlayTitle(name),
+      color: overlayDefaultColor(name), opacity: 1, hidden: false, layer: null, panel: null,
+    };
+    overlays[key] = entry;
+    buildMapOverlayLayer(entry);
     entry.panel = buildOverlayPanel(entry);
     els.overlayList.appendChild(entry.panel);
   }
 
-  function removeOverlay(name) {
-    var entry = overlays[name];
+  function addProductOverlay(id) {
+    var key = "product:" + id;
+    var sel = currentSelection();
+    if (!map || !currentCfg || !sel || !id || overlays[key]) return;
+    var prod = sel.sat.products[id];
+    productOverlayZ += 10;
+    var entry = {
+      key: key, kind: "product", product: id, title: (prod && prod.product_title) || id,
+      opacity: 1, hidden: false, frames: [], zIndex: productOverlayZ, panel: null,
+    };
+    overlays[key] = entry;
+    buildProductOverlayFrames(entry);
+    entry.panel = buildOverlayPanel(entry);
+    els.overlayList.appendChild(entry.panel);
+  }
+
+  function removeOverlay(key) {
+    var entry = overlays[key];
     if (!entry) return;
-    if (entry.layer) map.removeLayer(entry.layer);
+    if (entry.kind === "map") {
+      if (entry.layer) map.removeLayer(entry.layer);
+    } else {
+      entry.frames.forEach(function (l) { map.removeLayer(l); });
+    }
     if (entry.panel && entry.panel.parentNode) entry.panel.parentNode.removeChild(entry.panel);
-    delete overlays[name];
+    delete overlays[key];
     populateOverlaySelect();
   }
 
-  function setOverlayColor(name, color) {
-    var entry = overlays[name];
-    if (!entry) return;
+  function setMapOverlayColor(key, color) {
+    var entry = overlays[key];
+    if (!entry || entry.kind !== "map") return;
     entry.color = color;
-    buildOverlayLayer(entry); // the colour is part of the tile URL, so rebuild the layer
+    buildMapOverlayLayer(entry);
   }
 
-  function setOverlayOpacity(name, opacity) {
-    var entry = overlays[name];
+  function setOverlayOpacity(key, opacity) {
+    var entry = overlays[key];
     if (!entry) return;
     entry.opacity = opacity;
-    if (entry.layer && !entry.hidden) entry.layer.setOpacity(opacity);
+    if (entry.kind === "map") {
+      if (entry.layer && !entry.hidden) entry.layer.setOpacity(opacity);
+    } else {
+      showProductOverlayFrame(entry, frameIndex);
+    }
   }
 
-  function setOverlayHidden(name, hidden) {
-    var entry = overlays[name];
+  function setOverlayHidden(key, hidden) {
+    var entry = overlays[key];
     if (!entry) return;
     entry.hidden = hidden;
-    if (entry.layer) entry.layer.setOpacity(hidden ? 0 : entry.opacity);
+    if (entry.kind === "map") {
+      if (entry.layer) entry.layer.setOpacity(hidden ? 0 : entry.opacity);
+    } else {
+      showProductOverlayFrame(entry, frameIndex);
+    }
   }
 
-  // clearOverlays removes every active overlay layer and its control panel. Called when the satellite or
-  // sector changes, since overlays are sector-specific.
+  // clearOverlays removes every active overlay (layers/frames and panels). Called when the satellite or
+  // sector changes, since overlays are specific to a satellite/sector.
   function clearOverlays() {
-    Object.keys(overlays).forEach(function (name) {
-      var entry = overlays[name];
-      if (entry.layer && map) map.removeLayer(entry.layer);
+    Object.keys(overlays).forEach(function (key) {
+      var entry = overlays[key];
+      if (map) {
+        if (entry.kind === "map") {
+          if (entry.layer) map.removeLayer(entry.layer);
+        } else {
+          entry.frames.forEach(function (l) { map.removeLayer(l); });
+        }
+      }
       if (entry.panel && entry.panel.parentNode) entry.panel.parentNode.removeChild(entry.panel);
     });
     overlays = {};
@@ -1177,7 +1342,7 @@
       populateOverlaySelect();
       loadFrames();
     });
-    els.product.addEventListener("change", loadFrames);
+    els.product.addEventListener("change", function () { populateOverlaySelect(); loadFrames(); });
     els.frames.addEventListener("change", function () { updateDuration(); loadFrames(); });
     els.step.addEventListener("change", function () { updateDuration(); loadFrames(); });
     // Begin/End fields: recouple the Frames count, refresh the loop-length hint, and reload the window.
@@ -1210,8 +1375,9 @@
     els.zoomIn.addEventListener("click", function () { if (map) map.zoomIn(); });
     els.zoomOut.addEventListener("click", function () { if (map) map.zoomOut(); });
     els.overlay.addEventListener("change", function () {
-      var name = els.overlay.value;
-      if (name) addOverlay(name);
+      var v = els.overlay.value;
+      if (v.indexOf("map:") === 0) addMapOverlay(v.slice(4));
+      else if (v.indexOf("product:") === 0) addProductOverlay(v.slice(8));
       els.overlay.value = "";
       populateOverlaySelect();
     });

@@ -30,6 +30,10 @@ type Satellite struct {
 	ImageryResolutions map[string]string `json:"imagery_resolutions"`
 	// Products contains a list of available products for this satellite keyed by ID.
 	Products map[string]*Product
+	// ProductCategories preserves SLIDER's product ordering and section grouping. The order is lost when
+	// products are stored in the (unordered) Products map, so it is captured separately from the source
+	// define-products.js, using its "----------SECTION----------" header entries as section titles.
+	ProductCategories []*ProductCategory `json:"product_categories"`
 	// SatelliteTitle is the friendly human-readable name for this satellite
 	SatelliteTitle string `json:"satellite_title"`
 	// Sectors contains a list of available sectors for this Satellite keyed by ID.
