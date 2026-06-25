@@ -1,0 +1,26 @@
+# Local state and build artifacts that should never enter the build context.
+.git
+.github
+.idea
+.claude
+
+# Local tile cache and release output.
+cache/
+cache-data/
+release/
+
+# Compiled binaries and test/coverage artifacts.
+slider-cli
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Not needed to build the server.
+examples/
+Dockerfile
+docker-compose.yml
+.dockerignore

@@ -1,0 +1,16 @@
+services:
+  slider:
+    build:
+      context: .
+    image: slider-cli
+    ports:
+      - "8080:8080"
+    volumes:
+      # Durable host path for the tile cache. Replace ./cache-data with any
+      # absolute host path you want the cache persisted to. The directory must
+      # be writable by UID 65532 (the container's non-root user).
+      - ./cache-data:/data/cache
+    # Run as the image's built-in non-root user so writes to the bind-mounted
+    # host directory succeed.
+    user: "65532:65532"
+    restart: unless-stopped
