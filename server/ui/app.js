@@ -16,7 +16,13 @@
     loopStyle: document.getElementById("loop-style"),
     speed: document.getElementById("speed"),
     speedLabel: document.getElementById("speed-label"),
+    rotation: document.getElementById("rotation"),
+    rotationLabel: document.getElementById("rotation-label"),
+    autoRefresh: document.getElementById("auto-refresh"),
     play: document.getElementById("play"),
+    maxZoom: document.getElementById("max-zoom"),
+    zoomIn: document.getElementById("zoom-in"),
+    zoomOut: document.getElementById("zoom-out"),
     status: document.getElementById("status"),
     timestamp: document.getElementById("timestamp"),
     memory: document.getElementById("memory"),
@@ -42,6 +48,10 @@
   var suspendURLSync = false; // true while applying URL params, to avoid clobbering the URL
   var memoryRAF = false; // requestAnimationFrame coalescing flag for the memory estimate
   var baseMinutes = 0; // native cadence (minutes between consecutive images) for the current product
+  var currentCfg = null; // the most recent configureMap() result (tile/zoom geometry), for the Max Zoom button
+  var refreshTimer = null; // setInterval handle for auto-refresh polling; null when off
+  var rotation = 0; // current view rotation in degrees (applied to the map container via CSS transform)
+  var maxZoomArmed = false; // true while the Max Zoom button awaits a click on the map to pick the target
 
   function pad(n, width) {
     var s = String(n);
@@ -201,6 +211,16 @@
     return { sat: sat, sector: sector, product: product };
   }
 
+  // selectionQS builds the satellite/sector/product query string shared by the /api/times and
+  // /api/maxzoom endpoints.
+  function selectionQS(sel) {
+    return (
+      "satellite=" + encodeURIComponent(sel.sat.id) +
+      "&sector=" + encodeURIComponent(sel.sector.id) +
+      "&product=" + encodeURIComponent(sel.product.id)
+    );
+  }
+
   // Configure the Leaflet map for the selected sector's tile pyramid. The image is a square of
   // 2^zoom tiles of tileSize px; we express that to Leaflet via CRS.Simple bounds of side tileSize.
   // Number of extra zoom levels allowed past the deepest available resolution. These upscale the native
@@ -220,17 +240,22 @@
       map = L.map("map", {
         crs: L.CRS.Simple,
         attributionControl: false,
-        zoomControl: true,
+        // The built-in zoom control lives inside #map, which rotation enlarges and offsets off-screen.
+        // We use static buttons pinned to #map-wrap instead (see #zoom-in / #zoom-out).
+        zoomControl: false,
         minZoom: 0,
         maxZoom: overMax,
       });
       window.sliderMap = map; // exposed for debugging/automation
       map.on("moveend zoomend", updateURL);
       map.on("zoomend moveend", scheduleMemoryUpdate);
+      map.on("zoomend", updateZoomButtons);
+      map.on("click", onMaxZoomClick);
     }
     map.setMinZoom(0);
     map.setMaxZoom(overMax);
     map.setMaxBounds(bounds.pad(0.25));
+    updateZoomButtons();
     // Keep the current view if it still fits; otherwise frame the whole sector.
     if (map.getZoom() === undefined || map.getZoom() > overMax) {
       map.fitBounds(bounds);
@@ -308,14 +333,12 @@
     var frames = Math.max(1, Math.min(100, Number(els.frames.value) || 24));
     var step = Math.max(1, Math.min(96, Number(els.step.value) || 1));
     var need = frames * step;
+    var wasPlaying = playing; // restore playback after the rebuild (e.g. an auto-refresh)
 
     setStatus("Loading…");
     els.play.disabled = true;
 
-    var baseQS =
-      "satellite=" + encodeURIComponent(sel.sat.id) +
-      "&sector=" + encodeURIComponent(sel.sector.id) +
-      "&product=" + encodeURIComponent(sel.product.id);
+    var baseQS = selectionQS(sel);
 
     // Fetch the available times and the (probed) deepest zoom level in parallel.
     var timesP = fetch("/api/times?" + baseQS + "&count=" + need).then(function (r) {
@@ -333,6 +356,7 @@
         var data = results[0];
         var maxZoom = results[1].max_zoom;
         var cfg = configureMap(sel, maxZoom);
+        currentCfg = cfg;
         var all = (data.timestamps_int || []).map(function (n) { return String(n); });
         all.sort(); // chronological (zero-padded fixed-width strings sort lexically)
         // Take the most recent `need`, subsample by `step`, keep chronological order.
@@ -390,12 +414,63 @@
           applyPendingView(cfg);
           pendingView = null;
         }
+        // clearFrames() above stops any active loop; resume it after the rebuild so an auto-refresh
+        // (or a manual reload while playing) doesn't silently pause the animation.
+        if (wasPlaying) play();
+        // (re)apply rotation once the map container exists (e.g. an ?angle= URL param) and fill its corners.
+        applyRotation(rotation);
+        fitRotation();
+        // Re-arm auto-refresh so its interval tracks the current product's cadence (baseMinutes).
+        if (els.autoRefresh.checked) { stopAutoRefresh(); startAutoRefresh(); }
         updateURL();
       })
       .catch(function (err) {
         if (token !== loadToken) return;
         setStatus("Error: " + err.message);
       });
+  }
+
+  // --- Auto-refresh -----------------------------------------------------------
+  //
+  // While enabled, poll the times endpoint on a cadence-derived interval and only rebuild the frames
+  // when a newer image has appeared upstream — so an idle, unchanged loop never flickers.
+
+  function newestTimestamp() {
+    return timestamps.length ? timestamps[timestamps.length - 1] : null;
+  }
+
+  // refreshInterval picks how often to poll: roughly the product's native cadence, clamped to a sane
+  // 30s–5min window (falling back to 60s before the cadence is known).
+  function refreshInterval() {
+    var ms = baseMinutes > 0 ? baseMinutes * 60000 : 60000;
+    return Math.max(30000, Math.min(300000, ms));
+  }
+
+  // checkForNewImagery fetches just the latest timestamp and rebuilds the loop only if it's newer than
+  // what we're currently showing.
+  function checkForNewImagery() {
+    var sel = currentSelection();
+    if (!sel) return;
+    fetch("/api/times?" + selectionQS(sel) + "&count=1")
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data) return;
+        var latest = (data.timestamps_int || []).map(String).sort().pop();
+        if (latest && (!newestTimestamp() || latest > newestTimestamp())) loadFrames();
+      })
+      .catch(function () { /* transient network errors are ignored; the next tick retries */ });
+  }
+
+  function startAutoRefresh() {
+    stopAutoRefresh();
+    refreshTimer = setInterval(checkForNewImagery, refreshInterval());
+  }
+
+  function stopAutoRefresh() {
+    if (refreshTimer) {
+      clearInterval(refreshTimer);
+      refreshTimer = null;
+    }
   }
 
   // --- Selector population ----------------------------------------------------
@@ -506,7 +581,7 @@
   //   ts              time step (frames skipped between images)
   //   speed           animation frame delay in milliseconds
   //   motion          loop | rev | rock
-  //   angle           rotation in degrees (always 0; rotation is not yet supported)
+  //   angle           view rotation in degrees (−180…180, applied as a CSS transform on the map)
   //   st, et          start/end time (always 0; the loop tracks the latest imagery)
   //   x, y            map center, in pixels of the full image at the sector's max zoom level
 
@@ -548,7 +623,7 @@
     q.set("et", "0");
     q.set("speed", String(Number(els.speed.value)));
     q.set("motion", styleToMotion(els.loopStyle.value));
-    q.set("angle", "0");
+    q.set("angle", String(rotation));
     if (map) {
       var c = map.getCenter();
       var scale = Math.pow(2, coordBaseZoom);
@@ -592,6 +667,15 @@
       if (sp > 0) els.speed.value = Math.max(30, Math.min(600, sp));
     }
     if (p.has("motion")) els.loopStyle.value = motionToStyle(p.get("motion"));
+    if (p.has("angle")) {
+      var ang = parseInt(p.get("angle"), 10);
+      if (!isNaN(ang)) {
+        // Snap to the slider's 15° steps within −180…180 so the control and the view stay in sync.
+        ang = Math.max(-180, Math.min(180, Math.round(ang / 15) * 15));
+        els.rotation.value = String(ang);
+        applyRotation(ang);
+      }
+    }
     updateSpeedLabel();
   }
 
@@ -616,8 +700,117 @@
     els.speedLabel.textContent = "(" + els.speed.value + " ms)";
   }
 
+  // applyRotation rotates the map view about its center via a CSS transform on the Leaflet container.
+  // Leaflet has no native rotation, so this is purely visual (cheap; used for live slider feedback):
+  // pan/zoom is most accurate at 0°. Call fitRotation() to actually fill the rotated corners with tiles.
+  function applyRotation(deg) {
+    rotation = deg;
+    els.rotationLabel.textContent = "(" + deg + "°)";
+    if (!map) return;
+    map.getContainer().style.transform = deg ? "rotate(" + deg + "deg)" : "";
+  }
+
+  // fitRotation enlarges the Leaflet viewport to the rotated bounding box of its frame so the rotated map
+  // covers the whole frame with real adjacent tiles — no blank corners — while preserving the zoom and
+  // center. At 0° it restores the exact fit. The map clips to #map-wrap, so the oversize never spills out.
+  function fitRotation() {
+    if (!map) return;
+    var el = map.getContainer();
+    var wrap = el.parentNode;
+    var W0 = wrap.clientWidth, H0 = wrap.clientHeight;
+    if (!W0 || !H0) return;
+    var center = map.getCenter(), zoom = map.getZoom();
+    if (rotation) {
+      var rad = (rotation * Math.PI) / 180;
+      var c = Math.abs(Math.cos(rad)), s = Math.abs(Math.sin(rad));
+      var W2 = Math.ceil(W0 * c + H0 * s);
+      var H2 = Math.ceil(W0 * s + H0 * c);
+      el.style.width = W2 + "px";
+      el.style.height = H2 + "px";
+      el.style.left = Math.round((W0 - W2) / 2) + "px";
+      el.style.top = Math.round((H0 - H2) / 2) + "px";
+    } else {
+      // Unrotated: clear the inline sizing so the element returns to its fluid 100% fit and Leaflet
+      // handles window resizing on its own.
+      el.style.width = el.style.height = el.style.left = el.style.top = "";
+    }
+    map.invalidateSize({ animate: false, pan: false });
+    map.setView(center, zoom, { animate: false });
+  }
+
+  // updateZoomButtons greys out the static +/- buttons at the zoom limits, mirroring Leaflet's control.
+  function updateZoomButtons() {
+    if (!map || !els.zoomIn) return;
+    els.zoomIn.disabled = map.getZoom() >= map.getMaxZoom();
+    els.zoomOut.disabled = map.getZoom() <= map.getMinZoom();
+  }
+
+  // --- Max Zoom (click-to-target) ---------------------------------------------
+  //
+  // Clicking the Max Zoom button arms a one-shot "pick a point" mode (matching the public SLIDER): the
+  // next click on the map recenters there at the deepest native zoom. Click the button again or press
+  // Escape to cancel.
+
+  // clickLatLng converts a mouse event to a map latlng, compensating for the view rotation (Leaflet's
+  // own mapping ignores the CSS transform). It also handles the enlarged, rotation-fitted container.
+  function clickLatLng(ev) {
+    var el = map.getContainer();
+    var rect = el.getBoundingClientRect();
+    var dx = ev.clientX - (rect.left + rect.width / 2);
+    var dy = ev.clientY - (rect.top + rect.height / 2);
+    var rad = (rotation * Math.PI) / 180;
+    var cos = Math.cos(rad), sin = Math.sin(rad);
+    // Un-rotate the offset from the map center, then express it relative to the container's top-left.
+    var pt = L.point(
+      el.offsetWidth / 2 + dx * cos + dy * sin,
+      el.offsetHeight / 2 - dx * sin + dy * cos
+    );
+    return map.containerPointToLatLng(pt);
+  }
+
+  function armMaxZoom() {
+    if (!map || !currentCfg) return;
+    maxZoomArmed = true;
+    els.maxZoom.classList.add("armed");
+    map.getContainer().style.cursor = "crosshair";
+  }
+
+  function disarmMaxZoom() {
+    maxZoomArmed = false;
+    els.maxZoom.classList.remove("armed");
+    if (map) map.getContainer().style.cursor = "";
+  }
+
+  function onMaxZoomClick(e) {
+    if (!maxZoomArmed) return;
+    disarmMaxZoom();
+    if (currentCfg) map.setView(clickLatLng(e.originalEvent), currentCfg.nativeMax);
+  }
+
+  // patchRotatedDrag makes drag-to-pan follow the rotated view. Leaflet measures the drag offset in
+  // screen pixels and applies it to the (unrotated) map pane, so on a CSS-rotated map the pan goes the
+  // wrong way. We rotate the offset by −rotation back into the pane's local space before it's applied.
+  function patchRotatedDrag() {
+    if (!window.L || !L.Draggable || L.Draggable.prototype._rotPatched) return;
+    var orig = L.Draggable.prototype._updatePosition;
+    L.Draggable.prototype._updatePosition = function () {
+      if (rotation && this._startPos && this._newPos) {
+        var offset = this._newPos.subtract(this._startPos);
+        var rad = (-rotation * Math.PI) / 180;
+        var cos = Math.cos(rad), sin = Math.sin(rad);
+        this._newPos = this._startPos.add(
+          L.point(offset.x * cos - offset.y * sin, offset.x * sin + offset.y * cos)
+        );
+      }
+      orig.call(this);
+    };
+    L.Draggable.prototype._rotPatched = true;
+  }
+
   function init() {
     updateSpeedLabel();
+    applyRotation(0); // initialize the rotation label (the map doesn't exist yet)
+    patchRotatedDrag(); // make drag-to-pan respect the view rotation
     els.satellite.addEventListener("change", function () {
       populateSectors();
       populateProducts();
@@ -632,8 +825,26 @@
     els.step.addEventListener("change", function () { updateDuration(); loadFrames(); });
     els.speed.addEventListener("input", updateSpeedLabel);
     els.speed.addEventListener("change", updateURL);
+    els.rotation.addEventListener("input", function () { applyRotation(Number(els.rotation.value)); });
+    els.rotation.addEventListener("change", function () { fitRotation(); updateURL(); });
+    // Our enlarged viewport is sized to the frame; recompute it when the window (and thus the frame) resizes.
+    window.addEventListener("resize", function () { if (rotation) fitRotation(); });
     els.loopStyle.addEventListener("change", function () { rockDir = 1; updateURL(); });
+    els.autoRefresh.addEventListener("change", function () {
+      if (els.autoRefresh.checked) startAutoRefresh();
+      else stopAutoRefresh();
+    });
     els.play.addEventListener("click", togglePlay);
+    els.maxZoom.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      if (maxZoomArmed) disarmMaxZoom();
+      else armMaxZoom();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && maxZoomArmed) disarmMaxZoom();
+    });
+    els.zoomIn.addEventListener("click", function () { if (map) map.zoomIn(); });
+    els.zoomOut.addEventListener("click", function () { if (map) map.zoomOut(); });
 
     // Refresh the estimate periodically so the JS-heap figure stays current while the page is idle.
     setInterval(scheduleMemoryUpdate, 2000);

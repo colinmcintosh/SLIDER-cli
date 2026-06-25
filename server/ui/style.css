@@ -98,6 +98,24 @@ input[type="range"] {
   accent-color: var(--accent);
 }
 
+/* Inline checkbox control (e.g. Auto-refresh) — overrides the block label layout above. */
+.controls label.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.controls label.checkbox input {
+  width: auto;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
 .playback {
   margin-top: 18px;
   border-top: 1px solid var(--border);
@@ -201,18 +219,83 @@ input[type="range"] {
 }
 #panel footer a:hover { color: var(--accent); }
 
-#map {
+/* Clipping frame for the map. Rotation enlarges and rotates #map inside this box; overflow:hidden keeps
+   the rotated/oversized map from spilling over the sidebar or page edges. */
+#map-wrap {
   flex: 1 1 auto;
   height: 100%;
+  position: relative;
+  overflow: hidden;
   background: #000;
+}
+
+#map {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  /* Rotation slider rotates the map view about its center via a CSS transform set in app.js; fitRotation
+     enlarges the element (width/height/left/top) so real adjacent tiles fill the rotated corners. */
+  transform-origin: center center;
 }
 
 /* Leaflet dark tweaks */
 .leaflet-container { background: #000; }
 .leaflet-control-attribution { display: none; }
 
+/* Static zoom buttons, pinned to the map frame (#map-wrap) so they stay put through rotation. Styled to
+   match Leaflet's default zoom control, which they replace (the built-in control is disabled in app.js). */
+.map-zoom {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* The +/- pair, joined into one rounded bar. */
+.map-zoom-bar {
+  display: flex;
+  flex-direction: column;
+  border-radius: 4px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.65);
+}
+
+.map-zoom button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  background: #fff;
+  color: #000;
+  border: none;
+  font: bold 18px "Lucida Console", Monaco, monospace;
+  cursor: pointer;
+}
+
+.map-zoom-bar button { border-bottom: 1px solid #ccc; }
+.map-zoom-bar button:first-child { border-radius: 4px 4px 0 0; }
+.map-zoom-bar button:last-child { border-radius: 0 0 4px 4px; border-bottom: none; }
+
+/* The standalone Max Zoom button, separated below the bar. */
+#max-zoom {
+  border-radius: 4px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.65);
+}
+#max-zoom.armed { background: var(--accent); color: #fff; } /* waiting for a click on the map */
+
+.map-zoom button:hover { background: #f4f4f4; }
+#max-zoom.armed:hover { background: var(--accent); }
+.map-zoom button:disabled { color: #bbb; background: #f4f4f4; cursor: default; }
+
 @media (max-width: 720px) {
   #app { flex-direction: column; }
   #panel { width: 100%; flex: 0 0 auto; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
-  #map { flex: 1 1 auto; }
+  #map-wrap { flex: 1 1 auto; }
 }
