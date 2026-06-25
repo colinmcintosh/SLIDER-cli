@@ -188,6 +188,17 @@
         "/" + pad(coords.z, 2) + "/" + pad(coords.y, 3) + "/" + pad(coords.x, 3) + ".png"
       );
     },
+    // Leaflet sizes each tile img to exactly tileSize, so adjacent tiles butt edge-to-edge and
+    // sub-pixel rounding leaves hairline gaps. Render each tile 1px larger so neighbors overlap
+    // and there is never a gap — the imagery is continuous, so the overlap is invisible. This
+    // (with mix-blend-mode:normal in style.css) replaces Leaflet's plus-lighter seam hack, which
+    // rendered as a white grid in Edge.
+    _initTile: function (tile) {
+      L.TileLayer.prototype._initTile.call(this, tile);
+      var size = this.getTileSize();
+      tile.style.width = (size.x + 1) + "px";
+      tile.style.height = (size.y + 1) + "px";
+    },
   });
 
   function clearFrames() {

@@ -381,6 +381,11 @@ input[type="range"] {
 .leaflet-container { background: #000; }
 .leaflet-control-attribution { display: none; }
 
+/* Leaflet 1.9's plus-lighter seam workaround renders as a bright white grid between tiles at
+   fractional device-pixel-ratios (visible in Edge). We eliminate seams by overlapping tiles
+   instead (see _initTile override in app.js), so disable the blend mode here. */
+#map img.leaflet-tile { mix-blend-mode: normal; }
+
 /* Static zoom buttons, pinned to the map frame (#map-wrap) so they stay put through rotation. Styled to
    match Leaflet's default zoom control, which they replace (the built-in control is disabled in app.js). */
 .map-zoom {
