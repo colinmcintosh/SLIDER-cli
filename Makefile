@@ -48,6 +48,9 @@ release-minor:
 release-patch:
 	./tools/release.sh --patch
 
+serve:
+	docker compose up -d --force-recreate --build
+
 sync:
 	go get ./...
 
