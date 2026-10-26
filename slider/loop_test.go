@@ -37,3 +37,11 @@ func TestLoopOptsFromURL(t *testing.T) {
 	assert.Zero(t, got.BeginTime, "Incorrect end time")
 	assert.Zero(t, got.EndTime, "Incorrect end time")
 }
+
+func TestLoopOptsFromURL_BadSpeed(t *testing.T) {
+	NoProductDownload = true
+	var TestURI = "https://rammb-slider.cira.colostate.edu/?sat=himawari&sec=full_disk&z=0&angle=0&im=12&st=0&et=0&speed=fast&motion=loop&p%5B0%5D=geocolor"
+	_, err := LoopOptsFromURL(TestURI)
+	require.Error(t, err)
+	assert.Equal(t, "unable to parse speed: 'fast'", err.Error())
+}

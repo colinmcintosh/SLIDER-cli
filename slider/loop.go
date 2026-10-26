@@ -442,7 +442,7 @@ func LoopOptsFromURL(uri string) (*LoopOptions, error) {
 
 	speed, err := strconv.Atoi(data.Get("speed"))
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse zoom: '%s'", data.Get("z"))
+		return nil, fmt.Errorf("unable to parse speed: '%s'", data.Get("speed"))
 	}
 	speed = speed / 10
 
@@ -457,7 +457,7 @@ func LoopOptsFromURL(uri string) (*LoopOptions, error) {
 	if i, _ := strconv.Atoi(data.Get("et")); i > 0 {
 		endTime, err = time.Parse("20060102150405", data.Get("et"))
 		if err != nil {
-			return nil, fmt.Errorf("unable to parse begin time: '%s'", data.Get("et"))
+			return nil, fmt.Errorf("unable to parse end time: '%s'", data.Get("et"))
 		}
 	}
 
